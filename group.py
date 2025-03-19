@@ -1,4 +1,4 @@
-from request.py import Request
+from request import Request
 
 class Group:
 
