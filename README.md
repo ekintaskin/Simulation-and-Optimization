@@ -1,7 +1,7 @@
 # Simulation-and-Optimization
 
 ## Classes
-- Request class:
+- Request class: -Keivan
   - time_creation
   - time_arrived
   - time_handled
@@ -10,20 +10,20 @@
   - movie_id
   - storage_id
   
-- Group:
+- Group: -Ekin
   - Create a list of Request classes
   - Determine time_creation, time_arrived, group_id, movie_id, storage_id
   - Output: list of Request classes
   
-- Storage
+- Storage -Tam
   - Input: list of Request classes
   - Calculate the time_handled and time_served
   - Output: list of Request classes
  
-- Simulation:
+- Simulation: -Nicolaj
   - Run the simulation for the three storage unit
 
-- Statistics:
+- Statistics: -Nathan
   - Think about possible statistics
   - Implement statistics
   - Statistics should be calculated inside the simulation loop
