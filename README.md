@@ -28,3 +28,4 @@
   - Implement statistics
   - Statistics should be calculated inside the simulation loop
   - Input is the table of requests (list of Request classes)
+# Statistics had to be renamed sts.py and not statistics.py due to a conflict with an existing python library
