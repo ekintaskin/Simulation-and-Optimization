@@ -22,6 +22,7 @@ class Storage:
         on a First-Come-First-Served basis. In particular, draw Delta t_handle ~ Exp(lambda_handle) and
         Delta t_serve ~ mu(group, movie) + U(min_serve, max_serve) for each request.
         :param: requests (list<Request>): list of requests to be processed
+        :return: arrival_sorted_requests (list<Request>): list of requests sorted by arrival time
         """
         n_request = len(requests)
         if n_request == 0: return  # nothing to process
@@ -40,3 +41,5 @@ class Storage:
             request.processed = True
 
             process_start_time = request.time_served  # need to check if this is the correct time to start the next request (@served or @handled)
+
+        return arrival_sorted_requests
