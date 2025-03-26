@@ -1,35 +1,32 @@
 import numpy as np
 import random
 from request import Request
+from constants import TIME_INTERVALS, GROUP_ACTIVITIES, GROUP_MOVIE_POPULARITIES, RHO_SEND_TIME, GROUP_STORAGE_OPTIONS
+
+
 
 class Group:
-    def __init__(self, group_id, activity_pattern, popularity_weights, storage_options):
+    def __init__(self, group_id):
         """
         :param group_id: Identifier of the group (G1, G2, G3).
-        :param activity_pattern: List of request rates (requests per second for each time interval).
         :param popularity_weights: Dictionary mapping movie IDs to popularity values.
-        :param storage_options: List of available storage nodes for the group.
         """
         self.group_id = group_id
-        self.activity_pattern = activity_pattern
-        self.popularity_weights = popularity_weights
-        self.storage_options = storage_options
         self.current_time = 0
 
-    def generate_requests(self, total_time=3600):
+    def generate_requests(self):
         """
         Generates a list of requests for a group over the simulation period.
-        :param total_time: Total simulation duration (1 hour).
         :return: List of Request objects.
         """
         requests = []
-        time_intervals = [0, 1200, 2400, total_time]  # 3 intervals: 0-20min, 20-40min, 40-60min
+        total_time = TIME_INTERVALS[-1][1] # end of last interval
 
         for interval in range(3):
-            request_rate = self.activity_pattern[interval]
-            next_time = time_intervals[interval]
+            request_rate = GROUP_ACTIVITIES[self.group_id][interval]
+            next_time = TIME_INTERVALS[interval][0] # start of interval
 
-            while next_time < time_intervals[interval + 1]:
+            while next_time < TIME_INTERVALS[interval][1]:
                 # in Poisson process, the time between consecutive events follows an exponential distribution
                 inter_arrival_time = np.random.exponential(1 / request_rate)
                 next_time += inter_arrival_time
@@ -38,35 +35,37 @@ class Group:
                     break
 
                 # Weighted random selection
-                movie_id = random.choices(list(self.popularity_weights.keys()),
-                                          weights=list(self.popularity_weights.values()))[0]
+                movie_id = random.choices(list(GROUP_MOVIE_POPULARITIES[self.group_id].keys()),
+                                          weights=list(GROUP_MOVIE_POPULARITIES[self.group_id].values()))[0]
 
                 # Determine closest available storage node
                 storage_id = self.select_storage_node()
 
-                request = Request(group_id=self.group_id, movie_id=movie_id, time_creation=next_time)
-                request.set_arrival_time(next_time + self.get_request_latency(storage_id))
-                request.storage_id = storage_id
+                request = Request(group_id=self.group_id, movie_id=movie_id, storage_id=storage_id)
+                request.set_creation_time(next_time)
+
+                # Set arrival time for each request
+                self.calculate_time_arrived(request)
 
                 requests.append(request)
 
         return requests
 
     def select_storage_node(self):
-        latencies = {
-            "G1": {"MSN": 0.5, "ASN1": 0.2},
-            "G2": {"MSN": 0.5, "ASN1": 0.3, "ASN2": 0.4},
-            "G3": {"MSN": 0.5, "ASN2": 0.2},
-        }
 
-        available_nodes = {node: latencies[self.group_id][node] for node in self.storage_options}
+        available_nodes = {node: RHO_SEND_TIME[self.group_id][node] for node in GROUP_STORAGE_OPTIONS[self.group_id]}
 
         return min(available_nodes, key=available_nodes.get)
 
-    def get_request_latency(self, storage_id):
-        latencies = {
-            "G1": {"MSN": 0.5, "ASN1": 0.2},
-            "G2": {"MSN": 0.5, "ASN1": 0.3, "ASN2": 0.4},
-            "G3": {"MSN": 0.5, "ASN2": 0.2},
-        }
-        return latencies[self.group_id][storage_id]
+    def calculate_time_arrived(self, request:Request):
+        """
+        Set the arrival time for each request based on the group and storage node.
+        If the arrival time is greater than the maximum arrival time, the request is not processed.
+        :param request: Request object.
+        """
+        request.time_arrived = request.time_creation + RHO_SEND_TIME[request.group_id][request.storage_id]
+
+        if request.time_arrived > TIME_INTERVALS[-1][1]:  # end of last interval
+            request.processed = False
+            request.time_handled = np.inf
+            request.time_served = np.inf

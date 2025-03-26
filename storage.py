@@ -1,28 +1,22 @@
 import numpy as np
-from request import Request
 from functools import cmp_to_key
+from typing import List
+
+from request import Request
+from constants import MU_SERVE_TIME, MOVIE_SIZES, BOUND_SERVE_TIME, STORAGE_HANDLE_TIME_LAMBDA
+
 
 class Storage:
 
-    def __init__(self, rho_arrival, lambda_handle, mus_serve, bound_serve, max_arrival_time):
+    def __init__(self):
         """
-        Initialize parameters for the storage
-        :param rho_arrival (list<float>): arrival delay for each group
-        :param lambda_handle (float): handling rate
-        :param mus_serve (array<int> [3, #grp]): deterministic service time by movie size (small, medium, large) and group
-        :param bound_serve (tuple<float, float>): bounds for uniform distribution of service time
-        :param max_arrival_time (float): maximum arrival time for requests to be considered
+        Initialize parameters for the storage node.
         """
-        self.rho_arrival = rho_arrival
-        self.lambda_handle = lambda_handle
-        self.mu_small_serve = mus_serve[0]
-        self.mu_medium_serve = mus_serve[1]
-        self.mu_large_serve = mus_serve[2]
-        self.min_serve = bound_serve[0]
-        self.max_serve = bound_serve[1]
-        self.max_arrival_time = max_arrival_time
+        self.lambda_handle = STORAGE_HANDLE_TIME_LAMBDA # QUESTION: is this correct?
+        self.min_serve = BOUND_SERVE_TIME[0]
+        self.max_serve = BOUND_SERVE_TIME[1]
 
-    def process(self, requests):
+    def process(self, requests:List[Request]):
         """
         Simulate the queue of requests by processing in-place the request (handling and serving) by order of arrival
         on a First-Come-First-Served basis. In particular, draw Delta t_handle ~ Exp(lambda_handle) and
@@ -31,14 +25,6 @@ class Storage:
         """
         n_request = len(requests)
         if n_request == 0: return  # nothing to process
-
-        # Set arrival time for each request
-        for request in requests:
-            request.arrival_time = request.time_creation + self.rho_arrival[request.group_id]
-            if request.arrival_time > self.max_arrival_time:
-                request.processed = False
-                request.time_handled = np.infty
-                request.time_served = np.infty
 
         # Sort requests by arrival time
         arrival_sorted_requests = sorted(requests, key=cmp_to_key(lambda x,y: x.time_arrived - y.time_arrived))
@@ -55,13 +41,16 @@ class Storage:
 
             process_start_time = request.time_served  # need to check if this is the correct time to start the next request (@served or @handled)
 
-    def mu(self, request):
+
+
+    def mu(self, request:Request):
         """
         Return deterministic service time for a request based on the group and movie size.
         :param request (Request): request processed
         :return: deterministic service time for the request
         """
-        if request.movie_size <= 900: return self.mu_small_serve[request.group_id]
-        elif request.movie_size <= 1100: return self.mu_medium_serve[request.group_id]
-        elif request.movie_size <= 1500: return self.mu_large_serve[request.group_id]
-        else: raise ValueError(f'Invalid movie size {request.movie_size} [Mb] for movie {request.movie_id}')
+        movie_size = MOVIE_SIZES[request.movie_id]
+        if movie_size <= 900: return MU_SERVE_TIME[request.group_id][request.storage_id]['small']
+        elif movie_size <= 1100: return MU_SERVE_TIME[request.group_id][request.storage_id]['medium']
+        elif movie_size <= 1500: return MU_SERVE_TIME[request.group_id][request.storage_id]['large']
+        else: raise ValueError(f'Invalid movie size {movie_size} [Mb] for movie {request.movie_id}')

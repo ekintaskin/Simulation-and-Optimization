@@ -55,6 +55,9 @@ class Request:
         self.time_arrived = None
         self.time_handled = None
         self.time_served = None
+
+        # Processed flag
+        self.processed = False
         
         # Calculate timing values if storage_id is provided
         if storage_id:
