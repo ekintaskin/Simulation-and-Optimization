@@ -42,8 +42,8 @@ class Group:
                 storage_id = self.select_storage_node()
 
                 request = Request(group_id=self.group_id, movie_id=movie_id, storage_id=storage_id)
-                request.set_creation_time(next_time)
-
+                request.time_creation = next_time
+                
                 # Set arrival time for each request
                 self.calculate_time_arrived(request)
 
@@ -63,7 +63,7 @@ class Group:
         If the arrival time is greater than the maximum arrival time, the request is not processed.
         :param request: Request object.
         """
-        request.time_arrived = request.time_creation + RHO_SEND_TIME[request.group_id][request.storage_id]
+        request.time_arrived = request.time_creation + request.time_request_send
 
         if request.time_arrived > TIME_INTERVALS[-1][1]:  # end of last interval
             request.processed = False

@@ -3,7 +3,7 @@ from functools import cmp_to_key
 from typing import List
 
 from request import Request
-from constants import MU_SERVE_TIME, MOVIE_SIZES, BOUND_SERVE_TIME, STORAGE_HANDLE_TIME_LAMBDA
+from constants import BOUND_SERVE_TIME, STORAGE_HANDLE_TIME_LAMBDA
 
 
 class Storage:
@@ -36,21 +36,7 @@ class Storage:
         process_start_time = arrival_sorted_requests[0].time_arrived
         for request, delta_time_handle, delta_time_serve_random in zip(arrival_sorted_requests, deltas_time_handle, deltas_time_serve_random):
             request.time_handled = process_start_time + delta_time_handle
-            request.time_served = request.time_handled + self.mu(request) + delta_time_serve_random
+            request.time_served = request.time_handled + request.time_movie_service + delta_time_serve_random
             request.processed = True
 
             process_start_time = request.time_served  # need to check if this is the correct time to start the next request (@served or @handled)
-
-
-
-    def mu(self, request:Request):
-        """
-        Return deterministic service time for a request based on the group and movie size.
-        :param request (Request): request processed
-        :return: deterministic service time for the request
-        """
-        movie_size = MOVIE_SIZES[request.movie_id]
-        if movie_size <= 900: return MU_SERVE_TIME[request.group_id][request.storage_id]['small']
-        elif movie_size <= 1100: return MU_SERVE_TIME[request.group_id][request.storage_id]['medium']
-        elif movie_size <= 1500: return MU_SERVE_TIME[request.group_id][request.storage_id]['large']
-        else: raise ValueError(f'Invalid movie size {movie_size} [Mb] for movie {request.movie_id}')
