@@ -36,5 +36,25 @@ class Simulation():
             
             
 
+def test_simulation():
+    # Parameters
+    num_runs = 100
+    print_results = True
 
+    # Simulation class
+    simulation = Simulation()
+
+    max_waiting_times = []
+    mean_waiting_times = []
+    for i in range(num_runs):
+        if print_results:
+            print(f"Run {i + 1}")
+        
+        # run simulation
+        requests = simulation.run()
+
+        # calculate statistics here
+
+if __name__ == "__main__":
+    test_simulation()
 

@@ -7,7 +7,6 @@ from constants import BOUND_SERVE_TIME, STORAGE_HANDLE_TIME_LAMBDA
 
 
 class Storage:
-
     def __init__(self):
         """
         Initialize parameters for the storage node.
