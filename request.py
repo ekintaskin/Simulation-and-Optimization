@@ -40,6 +40,8 @@ class Request:
         """Calculate the waiting time (time_served - time_creation)."""
         if self.time_creation is None or self.time_served is None:
             return None
+        if not self.to_be_processed:
+            return None
         return self.time_served - self.time_creation
 
     def _calculate_send_time(self):

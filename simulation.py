@@ -68,9 +68,9 @@ def test_simulation():
         requests = simulation.run()
 
         # calculate statistics here
-        waiting_times = np.array([req.get_waiting_time() for req in requests])
+        waiting_times = np.array([req.get_waiting_time() for req in requests if req.to_be_processed])
         assert np.all(np.array(waiting_times) >= 0), "Waiting times should be non-negative"
-        assert np.all(np.array(waiting_times) < np.inf), "Waiting times should be non-negative"
+        assert np.all(np.array(waiting_times) < np.inf), "Waiting times should non-infinity"
         max_waiting_times.append(np.max(waiting_times))
         mean_waiting_times.append(np.mean(waiting_times))
         median_waiting_times.append(np.median(waiting_times))
