@@ -36,6 +36,12 @@ MOVIE_SIZES = {
     5: 900, 6: 1000, 7: 750, 8: 700, 9: 1100
 }
 
+INITIAL_MOVIE_HASHSET = {
+    "MSN": {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+    "ASN1": {2, 3, 9},
+    "ASN2": {2, 3, 9}
+}
+
 MU_SERVE_TIME = {
     "G1": {
         "MSN": {"small": 9, "medium": 12, "large": 15},
@@ -54,4 +60,4 @@ MU_SERVE_TIME = {
 
 BOUND_SERVE_TIME = (0.3, 0.7)
 
-STORAGE_HANDLE_TIME_LAMBDA = 0.5
+STORAGE_HANDLE_TIME_BETA = 0.5

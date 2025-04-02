@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from request import Request
 from group import Group
 from storage import Storage
-from constants import GROUP_IDS, STORAGE_IDS
+from constants import GROUP_IDS, STORAGE_IDS, INITIAL_MOVIE_HASHSET
 
 
 
@@ -14,18 +14,22 @@ class Simulation():
     def __init__(self):
         pass
 
-    def run(self) -> List[Request]:
+    def run(self, batch=False) -> List[Request]:
         """
         Run the simulation for a single run.
+        :param batch: use batch request generation (optional, default:False)
         :return: List of processed requests.
         """
 
         # generate requests
         requests = []
-        for group_id in GROUP_IDS:
 
+        movie_hashsets = INITIAL_MOVIE_HASHSET
+
+        for group_id in GROUP_IDS:
             group = Group(group_id=group_id)
-            requests.extend(group.generate_requests())
+            requests.extend(group.generate_requests_batch(movie_hashsets) if batch else group.generate_requests(movie_hashsets))
+        # print(requests)
 
         # sort requests by storage location
         requests_sorted = {id: [] for id in STORAGE_IDS}  
@@ -59,7 +63,7 @@ def test_simulation():
     for i in range(num_runs):
         if print_results:
             print(f"Run {i + 1}")
-        
+
         # run simulation
         requests = simulation.run()
 
