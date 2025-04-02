@@ -5,6 +5,7 @@ TIME_INTERVALS = [
 ]
 
 GROUP_IDS = ["G1", "G2", "G3"]
+STORAGE_IDS = ["MSN", "ASN1", "ASN2"]
 
 GROUP_ACTIVITIES = {
     "G1": [0.8, 1.2, 0.5],
