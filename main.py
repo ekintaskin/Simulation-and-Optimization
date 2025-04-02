@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 def main():
     # Parameters
     num_runs = 100
+    threshold = 30
     print_results = True
     max_waiting_times = []
     mean_waiting_times = []
+    var_waiting_times = []
+    bootstrap_mean_waiting_times = []
 
     run_start_time = time()
 
@@ -34,13 +37,19 @@ def main():
         mean_waiting_time = stats.mean_waiting_time()
         mean_waiting_times.append(mean_waiting_time)
 
+        var_waiting_time = stats.var_waiting_time()
+        var_waiting_times.append(var_waiting_time)
+
+        # (true_mean_waiting_time, bootstrap_mean_waiting_time)  = stats.mse_bootstrap(mean_waiting_time, num_bootstrap=100)
+        # bootstrap_mean_waiting_times.append(bootstrap_mean_waiting_time)
+
         print(f"Max Waiting Time: {stats.max_waiting_time():.2f} s")
-        print(f"Mean Waiting Time: {stats.mean_waiting_time():.2f} s")
-        print(f"Variance of Waiting Time: {stats.variance_of_waiting_time():.2f}")
+        print(f"Mean, Max and Variance of Waiting Time: {stats.mean_waiting_time():.2f} s,  {stats.max_waiting_time():.2f} s,  {stats.var_waiting_time():.2f} s")
+        # print(f"Bootstrap Mean Waiting Time: {bootstrap_mean_waiting_time:.2f} s")
         print(f"Waiting Time 50th, 90th, 95th and 99th percentiles: {stats.waiting_time_percentiles()} \n")
 
-        count_above_threshold, percentage_above_threshold, var_above_threshold = stats.num_customers_above_threshold(threshold=10)
-        print(f"Customers above 10s: {count_above_threshold}, In percentage: {percentage_above_threshold}, Variance: {var_above_threshold:.2f}")
+        count_above_threshold, percentage_above_threshold = stats.num_customers_above_threshold(threshold)
+        print(f"Customers above 30s: {count_above_threshold}, In percentage: {percentage_above_threshold:.2f} % \n")
 
 
     plt.figure(figsize=(8, 6))
