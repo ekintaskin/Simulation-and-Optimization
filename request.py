@@ -1,10 +1,10 @@
-import random
+import numpy as np
 
-from constants import MU_SERVE_TIME, RHO_SEND_TIME, MOVIE_SIZES
+from constants import MU_SERVE_TIME, RHO_SEND_TIME, MOVIE_SIZES, TIME_INTERVALS
 
 class Request:
     
-    def __init__(self, group_id, movie_id, storage_id):
+    def __init__(self, group_id, movie_id, storage_id, time_creation):
         """
         Initialize a Request object with automatic timing calculations.
         
@@ -19,24 +19,29 @@ class Request:
         self.storage_id = storage_id
         
         # Timing variables
-        self.time_creation = None
+        self.time_creation = time_creation
         self.time_arrived = None
-        self.time_handled = None
         self.time_served = None
-
-        # Processed flag
-        self.processed = False
         
         # Calculate timing values
         self.time_request_send = self._calculate_send_time()
         self.time_movie_service = self._calculate_service_time()
+        self.time_arrived = self.time_creation + self.time_request_send
+
+        # Check if arrival is within processing bounds
+        if self.time_arrived > TIME_INTERVALS[-1][1]:  # end of last interval
+            self.to_be_processed = False
+            self.time_handled = np.inf
+            self.time_served = np.inf
+        else:
+            self.to_be_processed = True
 
     def get_waiting_time(self):
         """Calculate the waiting time (time_served - time_creation)."""
         if self.time_creation is None or self.time_served is None:
             return None
         return self.time_served - self.time_creation
-    
+
     def _calculate_send_time(self):
         """Calculate transmission time based on group and storage node."""
         if self.group_id in RHO_SEND_TIME and self.storage_id in RHO_SEND_TIME[self.group_id]:

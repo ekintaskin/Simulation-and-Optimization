@@ -26,7 +26,7 @@ class Simulation():
         # requests = storage.process(requests)
         storage.process(requests)
         
-        print(f"Processed {sum(req.processed for req in requests)} out of {len(requests)} requests.\n")
+        print(f"Processed {sum(req.to_be_processed for req in requests)} out of {len(requests)} requests.\n")
 
 
         # # Calculate statistics      # Addition from Nathan

@@ -14,9 +14,10 @@ class Group:
         self.group_id = group_id
         self.current_time = 0
 
-    def generate_requests(self):
+    def generate_requests(self, movies_hashsets):
         """
         Generates a list of requests for a group over the simulation period.
+        :param movies_hashsets: Dictionary mapping storage node IDs to hashsets of movie IDs contained on storage nodes.
         :return: List of Request objects.
         """
         requests = []
@@ -39,33 +40,50 @@ class Group:
                                           weights=list(GROUP_MOVIE_POPULARITIES[self.group_id].values()))[0]
 
                 # Determine closest available storage node
-                storage_id = self.select_storage_node()
+                storage_id = self.select_storage_node(movie_id, movies_hashsets)
 
-                request = Request(group_id=self.group_id, movie_id=movie_id, storage_id=storage_id)
-                request.time_creation = next_time
-                
-                # Set arrival time for each request
-                self.calculate_time_arrived(request)
-
+                request = Request(group_id=self.group_id, movie_id=movie_id, storage_id=storage_id, time_creation=next_time)
                 requests.append(request)
 
         return requests
 
-    def select_storage_node(self):
+    def generate_requests_batch(self, movies_hashsets):
+        """
+        Optimized version of the generate_requests using batch generation of the Poisson process.
+        Generates a list of requests for a group over the simulation period.
+        :param movies_hashsets: Dictionary mapping storage node IDs to hashsets of movie IDs contained on storage nodes.
+        :return: List of Request objects.
+        """
+        requests = []
 
-        available_nodes = {node: RHO_SEND_TIME[self.group_id][node] for node in GROUP_STORAGE_OPTIONS[self.group_id]}
+        n_interval = len(GROUP_ACTIVITIES[self.group_id])
+        for interval in range(n_interval):
+            request_rate = GROUP_ACTIVITIES[self.group_id][interval]
+            start_time, end_time = TIME_INTERVALS[interval]
+
+            n_event_interval = np.random.poisson(request_rate * (end_time - start_time))  # the number of events in a given time interval t in a Poisson process is Poi(lambda * t)
+            event_times = np.random.uniform(start_time, end_time, n_event_interval)  # given the number of events, the event times are uniformly distributed in the interval
+            # event_times.sort()  # not needed since sorted in storage for arrival times
+
+            movie_ids = random.choices(list(GROUP_MOVIE_POPULARITIES[self.group_id].keys()), weights=list(GROUP_MOVIE_POPULARITIES[self.group_id].values()), k=n_event_interval)
+            selected_nodes = self.select_storage_node_batch(movie_ids, movies_hashsets)
+
+            for time_creation, movie_id, storage_id in zip(event_times, movie_ids, selected_nodes):
+                request = Request(group_id=self.group_id, movie_id=movie_id, storage_id=storage_id, time_creation=time_creation)
+                requests.append(request)
+
+        return requests
+
+
+    def select_storage_node(self, movie_id, movies_hashsets):
+
+        available_nodes = {node: RHO_SEND_TIME[self.group_id][node] for node in GROUP_STORAGE_OPTIONS[self.group_id] if movie_id in movies_hashsets[node]}
 
         return min(available_nodes, key=available_nodes.get)
 
-    def calculate_time_arrived(self, request:Request):
-        """
-        Set the arrival time for each request based on the group and storage node.
-        If the arrival time is greater than the maximum arrival time, the request is not processed.
-        :param request: Request object.
-        """
-        request.time_arrived = request.time_creation + request.time_request_send
+    def select_storage_node_batch(self, movie_ids, movies_hashsets):
+        available_nodes = GROUP_STORAGE_OPTIONS[self.group_id]
+        # if movie is not available in a storage node, its rho_send_time is read as infinity
+        selected_nodes = [min(available_nodes, key=lambda node: RHO_SEND_TIME[self.group_id][node] if movie_id in movies_hashsets[node] else np.infty) for movie_id in movie_ids]
 
-        if request.time_arrived > TIME_INTERVALS[-1][1]:  # end of last interval
-            request.processed = False
-            request.time_handled = np.inf
-            request.time_served = np.inf
+        return selected_nodes

@@ -2,8 +2,10 @@ import numpy as np
 from functools import cmp_to_key
 from typing import List
 
+from distributed.profile import process
+
 from request import Request
-from constants import BOUND_SERVE_TIME, STORAGE_HANDLE_TIME_LAMBDA
+from constants import BOUND_SERVE_TIME, STORAGE_HANDLE_TIME_BETA
 
 
 class Storage:
@@ -11,7 +13,6 @@ class Storage:
         """
         Initialize parameters for the storage node.
         """
-        self.lambda_handle = STORAGE_HANDLE_TIME_LAMBDA # QUESTION: is this correct?
         self.min_serve = BOUND_SERVE_TIME[0]
         self.max_serve = BOUND_SERVE_TIME[1]
 
@@ -30,15 +31,16 @@ class Storage:
         arrival_sorted_requests = sorted(requests, key=cmp_to_key(lambda x,y: x.time_arrived - y.time_arrived))
 
         # Process requests in order of arrival
-        deltas_time_handle = np.random.exponential(1/self.lambda_handle, size=n_request)  # generate in batch for efficiency
+        deltas_time_handle = np.random.exponential(scale=STORAGE_HANDLE_TIME_BETA, size=n_request)  # generate in batch for efficiency
         deltas_time_serve_random = np.random.uniform(self.min_serve, self.max_serve, size=n_request)  # generate in batch for efficiency
 
         process_start_time = arrival_sorted_requests[0].time_arrived
         for request, delta_time_handle, delta_time_serve_random in zip(arrival_sorted_requests, deltas_time_handle, deltas_time_serve_random):
-            request.time_handled = process_start_time + delta_time_handle
-            request.time_served = request.time_handled + request.time_movie_service + delta_time_serve_random
-            request.processed = True
+            process_start_time = max(process_start_time, request.time_arrived)  # wait until the next request arrives
+            if request.to_be_processed:  # check if request is within processing time
+                request.time_handled = process_start_time + delta_time_handle
+                request.time_served = request.time_handled + request.time_movie_service + delta_time_serve_random
 
-            process_start_time = request.time_served  # need to check if this is the correct time to start the next request (@served or @handled)
+                process_start_time = request.time_handled # request.time_served  # need to check if this is the correct time to start the next request (@served or @handled)
 
         return arrival_sorted_requests

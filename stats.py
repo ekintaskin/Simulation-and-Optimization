@@ -7,7 +7,7 @@ class Stats:
     def __init__(self, requests): # Will deal with "requests" in simulation.py where Stats is called upon
         # self.requests = [req for req in requests]
         # self.requests = [req for req in requests if req.processed]
-        self.requests = [req for req in requests if isinstance(req, Request) and req.processed]
+        self.requests = [req for req in requests if isinstance(req, Request) and req.to_be_processed]
         
         # Unique print set to replace the ones below
         if not self.requests:
