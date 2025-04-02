@@ -30,6 +30,12 @@ class Request:
         # Calculate timing values
         self.time_request_send = self._calculate_send_time()
         self.time_movie_service = self._calculate_service_time()
+
+    def get_waiting_time(self):
+        """Calculate the waiting time (time_served - time_creation)."""
+        if self.time_creation is None or self.time_served is None:
+            return None
+        return self.time_served - self.time_creation
     
     def _calculate_send_time(self):
         """Calculate transmission time based on group and storage node."""
