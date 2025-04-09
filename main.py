@@ -2,11 +2,12 @@ from simulation import Simulation
 from time import time
 from stats import Stats
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def main():
     # Parameters
-    num_runs = 100
+    num_runs = 10
     threshold = 30
     print_results = True
     max_waiting_times = []
@@ -40,12 +41,16 @@ def main():
         var_waiting_time = stats.var_waiting_time()
         var_waiting_times.append(var_waiting_time)
 
-        # (true_mean_waiting_time, bootstrap_mean_waiting_time)  = stats.mse_bootstrap(mean_waiting_time, num_bootstrap=100)
-        # bootstrap_mean_waiting_times.append(bootstrap_mean_waiting_time)
+        (true_mean_waiting_time, bootstrap_mean_waiting_time_mse, bootstrap_waiting_time_stats) = stats.mse_bootstrap(np.mean, num_bootstrap=100)
+        bootstrap_mean_waiting_times.append(bootstrap_mean_waiting_time_mse)
 
         print(f"Max Waiting Time: {stats.max_waiting_time():.2f} s")
         print(f"Mean, Max and Variance of Waiting Time: {stats.mean_waiting_time():.2f} s,  {stats.max_waiting_time():.2f} s,  {stats.var_waiting_time():.2f} s")
-        # print(f"Bootstrap Mean Waiting Time: {bootstrap_mean_waiting_time:.2f} s")
+        
+        # Print the first few bootstrap statistics for inspection
+        print(f"First 5 Bootstrap Mean Computations: {bootstrap_waiting_time_stats[:5]}")
+        print(f"MSE of the Bootstrap Mean Waiting Time compared to true Mean: {bootstrap_mean_waiting_time_mse:.2f} s")
+        
         print(f"Waiting Time 50th, 90th, 95th and 99th percentiles: {stats.waiting_time_percentiles()} \n")
 
         count_above_threshold, percentage_above_threshold = stats.num_customers_above_threshold(threshold)
