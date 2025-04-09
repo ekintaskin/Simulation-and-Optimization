@@ -20,37 +20,32 @@ class Stats:
         # print(f"Requests identified as processed: {len(self.requests)}\n")
         # print(f"First 5 processed request status: {[req.processed for req in self.requests[:5]]}")
 
-    # function returning the waiting time
-    # def waiting_time(self):
-        # return (req.get_waiting_time() for req in self.requests)
-            
-    # function computing the mean of the max waiting time
-    def max_waiting_time(self):
-        return max(req.get_waiting_time() for req in self.requests)
+    def get_waiting_time(self):
+        """Returns the waiting times as a NumPy array."""
+        return np.array([req.get_waiting_time() for req in self.requests])
 
-    # function computing the mean of the mean waiting time
-    def mean_waiting_time(self):
-        return np.mean([req.get_waiting_time() for req in self.requests])
+    # Realisation that the mean, max and var functions were useless compared to np ones
 
-    # function computing the variance of the waiting time
-    def var_waiting_time(self):
-        return np.var([req.get_waiting_time() for req in self.requests])
+    # def max_waiting_time(self):
+    #     return np.max(self.get_waiting_time())
 
-    # function computing different percentiles of the waiting time
-    def waiting_time_percentiles(self, percentiles=[50, 90, 95, 99]):
-        waiting_times = [req.get_waiting_time() for req in self.requests]
-        return np.percentile(waiting_times, percentiles)
+    # def mean_waiting_time(self):
+    #     return np.mean(self.get_waiting_time())
 
-    # function for finding how many clients have to wait more than a given amount of time
-    # can be used to define a threshold for satisfaction
-    # returns the number, the percentage and the variance of the times the threshold is exceeded
+    # def var_waiting_time(self):
+    #     return np.var(self.get_waiting_time())
+
+    # # function computing different percentiles of the waiting time
+    # def waiting_time_percentiles(self, percentiles=[50, 90, 95, 99]):
+    #     waiting_times = [req.get_waiting_time() for req in self.requests]
+    #     return np.percentile(waiting_times, percentiles)
+
     def num_customers_above_threshold(self, threshold):
-        waiting_times = np.array([req.get_waiting_time() for req in self.requests])
+        waiting_times = self.get_waiting_time()
         count_above = np.sum(waiting_times > threshold)
-        percentage_above = count_above/len(self.requests)*100
-        return count_above, percentage_above#, np.var(wait_times > threshold)
+        percentage_above = count_above / len(self.requests) * 100
+        return count_above, percentage_above
 
-    # function for computing the mean squared error of a statistic of choice and its bootstrapping equivalent
     def mse_bootstrap(self, f_statistic, num_bootstrap):
         """ Calculates the bootstrap MSE of a statistic of choice and returns the bootstrap statistics.
 
@@ -75,18 +70,14 @@ class Stats:
         if not callable(f_statistic):
             raise TypeError("f_statistic must be a callable function.")
         
-        waiting_times = np.array([req.get_waiting_time() for req in self.requests])
-        
-        # Compute the true statistic from the waiting time
+        waiting_times = self.get_waiting_time()
         true_stat = f_statistic(waiting_times)
 
-        # Bootstrap resampling
         bootstrap_stats = []
         for _ in range(num_bootstrap):
             resampled_waiting_time = np.random.choice(waiting_times, size=len(waiting_times), replace=True)
             bootstrap_stats.append(f_statistic(resampled_waiting_time))
         
-        # Compute MSE
         mse_bootstrap = float(np.mean((np.array(bootstrap_stats) - true_stat) ** 2))
         
         return (true_stat, mse_bootstrap, bootstrap_stats)
