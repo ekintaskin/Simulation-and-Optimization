@@ -6,6 +6,7 @@ TIME_INTERVALS = [
 
 GROUP_IDS = ["G1", "G2", "G3"]
 STORAGE_IDS = ["MSN", "ASN1", "ASN2"]
+MOVIES_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 GROUP_ACTIVITIES = {
     "G1": [0.8, 1.2, 0.5],
