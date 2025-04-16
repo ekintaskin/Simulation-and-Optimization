@@ -14,17 +14,16 @@ class Simulation():
     def __init__(self):
         pass
 
-    def run(self, batch=False) -> List[Request]:
+    def run(self, movie_hashsets=INITIAL_MOVIE_HASHSET, batch=False) -> List[Request]:
         """
         Run the simulation for a single run.
+        :param movie_hashsets: movie hashset defining the storage configuration (by default the initial configuration)
         :param batch: use batch request generation (optional, default:False)
         :return: List of processed requests.
         """
 
         # generate requests
         requests = []
-
-        movie_hashsets = INITIAL_MOVIE_HASHSET
 
         for group_id in GROUP_IDS:
             group = Group(group_id=group_id)
@@ -47,7 +46,9 @@ class Simulation():
             requests.extend(r_)
         return requests
             
-            
+
+
+
 
 def test_simulation():
     # Parameters

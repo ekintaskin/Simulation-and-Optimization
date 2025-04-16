@@ -1,12 +1,14 @@
+import numpy as np
+
 TIME_INTERVALS = [
     (0, 1200),  # 0-20min
     (1200, 2400),  # 20-40min
     (2400, 3600),  # 40-60min
 ]
 
-GROUP_IDS = ["G1", "G2", "G3"]
-STORAGE_IDS = ["MSN", "ASN1", "ASN2"]
-MOVIES_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+GROUP_IDS = {"G1", "G2", "G3"}
+STORAGE_IDS = {"MSN", "ASN1", "ASN2"}
+MOVIES_IDS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 GROUP_ACTIVITIES = {
     "G1": [0.8, 1.2, 0.5],
@@ -41,6 +43,12 @@ INITIAL_MOVIE_HASHSET = {
     "MSN": {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
     "ASN1": {2, 3, 9},
     "ASN2": {2, 3, 9}
+}
+
+STORAGE_SIZES = {
+    "MSN": np.inf,
+    "ASN1": 3500,
+    "ASN2": 3500,
 }
 
 MU_SERVE_TIME = {
