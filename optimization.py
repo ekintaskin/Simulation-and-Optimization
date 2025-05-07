@@ -8,19 +8,18 @@ from constants import STORAGE_IDS, STORAGE_SIZES, MOVIES_IDS, MOVIE_SIZES
 
 class Optimization():
 
-    def __init__(self, optimization_fct_name, print_results=False, random_seed=42):
+    def __init__(self, print_results=False, random_seed=42):
         """
-        :param optimization_fct: name of function to optimize
         :param print_results: whether to print the results
         :param random_seed: random seed for reproducibility
         """
-        self.optimization_fct_name = optimization_fct_name
         self.print_results = print_results
         self.rng = np.random.default_rng(random_seed)
 
-    def __call__(self, num_optimization_iters=10, num_iters_per_optimization=10, metric_fct=np.mean):
+    def __call__(self, optimization_fct_name, num_optimization_iters=10, num_iters_per_optimization=10, metric_fct=np.mean):
         """
         Optimize the storage configuration based on the requests and storage.
+        :param optimization_fct: name of function to optimize
         :param num_optimization_iters: number of optimization iterations
         :param num_iters_per_optimization: number of iterations per optimization
         :param metric_fct: function to calculate the metric (e.g. mean, median)
@@ -33,10 +32,10 @@ class Optimization():
         best_hashset = None
         for i in range(num_optimization_iters):
             if self.print_results:
-                print(f"Optimization Iteration {i + 1}")
+                print(f"Optimization Iteration {i + 1}/{num_optimization_iters}...")
 
             # Call optimization function
-            optimization_fct = getattr(self, self.optimization_fct_name)
+            optimization_fct = getattr(self, optimization_fct_name)
             movie_hashsets = optimization_fct(best_hashset=best_hashset)
 
             metrics = []
@@ -71,18 +70,24 @@ class Optimization():
         
         movie_hashsets: Dict[str, Set[int]] = {}
         for id in STORAGE_IDS:
-            movie_hashsets[id] = set()
+            
+            # if the storage is MSN, add all movies
+            if id == "MSN":
+                movie_hashsets[id] = set(MOVIES_IDS)
+                continue
 
+            # if the storage is ASN1 or ASN2, randomly select movies
+            movie_hashsets[id] = set()
             capacity = STORAGE_SIZES[id]
             while capacity > 0:
 
                 # get random movie id
                 movie_id = self.rng.choice(list(MOVIES_IDS)).item()
 
-                # check if the movie is already in the hashset
+                # check if the movie is not already in the hashset
                 if movie_id not in movie_hashsets[id]:
 
-                    # check if the movie can be added to the hashset
+                    # check if there is enough capacity to add the movie
                     if capacity - MOVIE_SIZES[movie_id] >= 0:
                         movie_hashsets[id].add(movie_id)
                         capacity -= MOVIE_SIZES[movie_id]
@@ -98,6 +103,74 @@ class Optimization():
                     break
 
         return movie_hashsets
+    
+    def replace_one(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by removing one movie and filling the storage with random movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._replace(best_hashset=best_hashset, num_movies_to_replace=1)
+    
+    def replace_two(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by removing two movies and filling the storage with random movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._replace(best_hashset=best_hashset, num_movies_to_replace=2)
+    
+    def replace_three(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by removing three movies and filling the storage with random movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._replace(best_hashset=best_hashset, num_movies_to_replace=3)
+    
+    def _replace(self, best_hashset:Dict[str, Set[int]]=None, num_movies_to_replace=1):
+        """
+        Optimize the movie hashset by removing movies and filling the storage with random movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :param num_movies_to_replace: number of movies to replace
+        :return: optimized movie hashsets
+        """
+        # initialize the movie hashsets with a random configuration
+        if best_hashset is None:
+            return self.random()
+        
+        next_hashset:Dict[str, Set[int]] = {}
+        for storage_id, movie_set in best_hashset.items():
+
+            # if the storage is MSN, add all movies
+            if storage_id == "MSN":
+                next_hashset[storage_id] = MOVIES_IDS
+                continue
+
+            # if the storage is ASN1 or ASN2, remove one movie and fill the hashset with random movies
+            movie_to_remove = self.rng.choice(tuple(movie_set), size=num_movies_to_replace, replace=False)
+            for movie_id in movie_to_remove:
+                movie_set.remove(movie_id)
+
+            capacity = STORAGE_SIZES[storage_id] - sum([MOVIE_SIZES[i] for i in movie_set])
+            for movie_id in self.rng.permutation(list(MOVIES_IDS)):
+                movie_id = movie_id.item()
+
+                # check if the movie is not already in the hashset
+                if movie_id in movie_set:
+                    continue
+
+                # check if there is enough capacity to add the movie
+                if capacity - MOVIE_SIZES[movie_id] >= 0:
+                    movie_set.add(movie_id)
+                    capacity -= MOVIE_SIZES[movie_id]
+
+            next_hashset[storage_id] = movie_set
+
+        return next_hashset
+
+        
+
 
 
 
@@ -106,10 +179,10 @@ def test_optimization():
     Test the optimization class.
     """
     optimization = Optimization(
-        optimization_fct_name="random", 
         print_results=True,
     )
     best_hashset, waiting_time_best = optimization(
+        optimization_fct_name="replace_two", 
         num_optimization_iters=25, 
         num_iters_per_optimization=10,
         metric_fct=np.mean,
