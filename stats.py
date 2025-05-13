@@ -46,6 +46,21 @@ class Stats:
         percentage_above = count_above / len(self.requests) * 100
         return count_above, percentage_above
 
+    def user_satisfaction(self, waiting_times, critical_wait_time=120, decay_rate=0.025):
+        """Calculates user satisfaction in [0,1], 1 being completely satisfied,
+            based on waiting times using a sigmoid map.
+
+        Args:
+            waiting_times (list): List of waiting times.
+            critical_wait_time (float): Critical waiting time threshold (at which the satisfaction is 0.5).
+            decay_rate (float): Decay rate for the exponential function.
+
+        Returns:
+            float: User satisfaction score in [0,1].
+        """
+        exp_decay = np.exp(-decay_rate * (waiting_times - critical_wait_time))
+        return exp_decay / (1 + exp_decay)
+
     def mse_bootstrap(self, f_statistic, num_bootstrap):
         """ Calculates the bootstrap MSE of a statistic of choice and returns the bootstrap statistics.
 
