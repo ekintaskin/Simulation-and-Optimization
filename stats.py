@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from request import Request
+from constants import STORAGE_IDS, TIME_INTERVALS
 # from storage import Storage
 
 class Stats:
@@ -23,22 +24,6 @@ class Stats:
     def get_waiting_time(self):
         """Returns the waiting times as a NumPy array."""
         return np.array([req.get_waiting_time() for req in self.requests])
-
-    # Realisation that the mean, max and var functions were useless compared to np ones
-
-    # def max_waiting_time(self):
-    #     return np.max(self.get_waiting_time())
-
-    # def mean_waiting_time(self):
-    #     return np.mean(self.get_waiting_time())
-
-    # def var_waiting_time(self):
-    #     return np.var(self.get_waiting_time())
-
-    # # function computing different percentiles of the waiting time
-    # def waiting_time_percentiles(self, percentiles=[50, 90, 95, 99]):
-    #     waiting_times = [req.get_waiting_time() for req in self.requests]
-    #     return np.percentile(waiting_times, percentiles)
 
     def num_customers_above_threshold(self, threshold):
         waiting_times = self.get_waiting_time()

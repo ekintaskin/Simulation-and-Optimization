@@ -1,6 +1,6 @@
 import numpy as np
-from dask.array import average
-from numba import float64
+# from dask.array import average
+# from numba import float64
 
 from constants import *
 
@@ -49,7 +49,7 @@ def compute_mean_request_rate(movies_hashsets=INITIAL_MOVIE_HASHSET):
 
         for interval in range(len(TIME_INTERVALS)):
             t_start, t_end = TIME_INTERVALS[interval]
-            duration = t_start - t_end
+            duration = t_end - t_start
 
             average_number_requests = GROUP_ACTIVITIES[group_id][interval] * duration
 
@@ -61,7 +61,30 @@ def compute_mean_request_rate(movies_hashsets=INITIAL_MOVIE_HASHSET):
     for storage_id in STORAGE_IDS:
         for interval in range(len(TIME_INTERVALS)):
             t_start, t_end = TIME_INTERVALS[interval]
-            duration = t_start - t_end
+            duration = t_end - t_start
             mean_request_rate[storage_id][interval] /= duration
 
     return mean_request_rate
+
+def compute_overall_request_rate(movies_hashsets=INITIAL_MOVIE_HASHSET):
+    """
+    Computes the overall request rate for a given movie hashset as the # requests / total duration.
+    :param movies_hashsets: movie hashset defining the storage configuration (by default the initial configuration)
+    :return: overall request rate # requests / total_duration
+    """
+    overall_request_rate = 0
+    total_duration = TIME_INTERVALS[-1][1] - TIME_INTERVALS[0][0]
+
+    # compounding total request number per storage in each interval
+    for group_id in GROUP_IDS:
+        for interval in range(len(TIME_INTERVALS)):
+            t_start, t_end = TIME_INTERVALS[interval]
+            duration = t_end - t_start
+
+            average_number_requests = GROUP_ACTIVITIES[group_id][interval] * duration
+            overall_request_rate += average_number_requests
+
+    # computing rate
+    overall_request_rate /= total_duration
+
+    return overall_request_rate
