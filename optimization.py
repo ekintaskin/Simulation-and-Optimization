@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import copy
 from typing import Dict, Set
+import matplotlib.pyplot as plt
 
 from simulation import Simulation
 from stats import Stats
@@ -26,6 +28,8 @@ class Optimization():
         metric_fct=np.mean, 
         use_mean_rate_constraint=False, 
         use_control_variate=False,
+        save_optimization_fct_history=False,
+        choose_optimization_fct_randomly=False,
     ):
         """
         Optimize the storage configuration based on the requests and storage.
@@ -34,6 +38,10 @@ class Optimization():
         :param num_optimization_iters: number of optimization iterations
         :param num_iters_per_optimization: number of iterations per optimization
         :param metric_fct: function to calculate the metric (e.g. mean, median)
+        :param use_mean_rate_constraint: whether to use the mean rate constraint
+        :param use_control_variate: whether to use the control variate method
+        :param save_optimization_fct_history: whether to save the optimization function history
+        :param choose_optimization_fct_randomly: whether to choose the optimization function randomly
         :return: best movie hashset and its corresponding best metric
         """
         # Simulation class
@@ -45,6 +53,10 @@ class Optimization():
         for i in range(num_optimization_iters):
             if self.print_results:
                 print(f"\nIteration {i + 1}/{num_optimization_iters} using function {optimization_fct_names[fct_count]}")
+
+            # Randomly choose the optimization function
+            if choose_optimization_fct_randomly:
+                fct_count = self.rng.integers(0, len(optimization_fct_names))
 
             # Call optimization function
             optimization_fct = getattr(self, optimization_fct_names[fct_count])
@@ -81,6 +93,11 @@ class Optimization():
                 if self.print_results:
                     print(f"New best metric: {best_metric:.2f}.")
                     print(f"New best hashsets: {best_hashset}")
+
+                # save the optimization function history
+                if save_optimization_fct_history:
+                    with open("optimization_fct_history.csv", "a") as f:
+                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}\n")
             else:
                 # Variable Neighbourhood Structure (VNS): update the function to optimize
                 fct_count += 1
@@ -417,10 +434,6 @@ class Optimization():
 
         return b + a*mu
 
-# TODO:
-# - implement optimization function scheduling
-
-
 def test_optimization():
     """
     Test the optimization class.
@@ -428,34 +441,32 @@ def test_optimization():
     optimization_fct_names = [
         "random",
         "replace_one", 
-        "replace_two", 
-        "replace_three",
+        "replace_two",
         "swap_one", 
         "swap_two",
         "swap_three",
         "replace_one_fill", 
-        "replace_two_fill", 
-        "replace_three_fill",
-        "remove_one", 
-        "remove_two",
-        "remove_three",
+        "replace_two_fill",
     ]
 
     optimization = Optimization(
         print_results=True,
-        random_seed=3,
+        random_seed=0,
     )
     best_hashset, waiting_time_best = optimization(
         optimization_fct_names=optimization_fct_names,
-        num_optimization_iters=200, 
-        num_iters_per_optimization=10,
+        num_optimization_iters=100, 
+        num_iters_per_optimization=33,
         metric_fct=np.mean,
-        use_control_variate=False,
+        use_control_variate=True,
         use_mean_rate_constraint=False,
+        save_optimization_fct_history=False,
+        choose_optimization_fct_randomly=False,
     )
 
     print(f"\n\nFinal hashset: {best_hashset}")
     print(f"Final waiting time: {waiting_time_best:.2f}")
+
 
 if __name__ == "__main__":
     test_optimization()
