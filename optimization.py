@@ -23,9 +23,10 @@ class Optimization():
     def __call__(
         self, 
         optimization_fct_names, 
-        num_optimization_iters=10, 
-        num_iters_per_optimization=10, 
-        metric_fct=np.mean, 
+        num_optimization_iters=10,
+        num_iters_per_optimization=250,
+        metric_fct=np.mean,
+        tolerance=0.1,
         use_mean_rate_constraint=False, 
         use_control_variate=False,
         save_optimization_fct_history=False,
@@ -38,6 +39,7 @@ class Optimization():
         :param num_optimization_iters: number of optimization iterations
         :param num_iters_per_optimization: number of iterations per optimization
         :param metric_fct: function to calculate the metric (e.g. mean, median)
+        :param tolerance: Tolerance wanted for the precision on the true statistic (95% CI half-width < tolerance)
         :param use_mean_rate_constraint: whether to use the mean rate constraint
         :param use_control_variate: whether to use the control variate method
         :param save_optimization_fct_history: whether to save the optimization function history
@@ -48,6 +50,7 @@ class Optimization():
         simulation = Simulation()
 
         best_metric = np.inf
+        best_metric_mse_bootstrap = np.inf
         best_hashset = None
         fct_count = 0
         for i in range(num_optimization_iters):
@@ -72,9 +75,15 @@ class Optimization():
                             print(f"Request rate greater than handling rate. Skipping...")
                         continue
 
+            # Compute bootstrap estimate of the MSE
+            requests_bootstrap = simulation.run(movie_hashsets=movie_hashsets)
+            bootstrap_stats = Stats(requests_bootstrap)
+            mse_bootstrap, n_simulations = bootstrap_stats.mse_bootstrap(f_statistic=metric_fct, tolerance=tolerance)
+
+            # generate MC or CV estimate
             metrics = []
             control_variates = []
-            for _ in range(num_iters_per_optimization):                
+            for _ in range(min(num_iters_per_optimization, n_simulations)):
                 # run simulation
                 requests = simulation.run(movie_hashsets=movie_hashsets)
 
@@ -88,16 +97,17 @@ class Optimization():
             metrics_mean = np.mean(metrics) if not use_control_variate else self.control_variate_estimate(np.array(metrics), np.array(control_variates), mu_CV)
             if metrics_mean < best_metric:
                 best_metric = metrics_mean
+                best_metric_mse_bootstrap = mse_bootstrap
                 best_hashset = movie_hashsets
 
                 if self.print_results:
-                    print(f"New best metric: {best_metric:.2f}.")
+                    print(f"New best metric: {best_metric:.2f} ± {1.96*np.sqrt(best_metric_mse_bootstrap/num_iters_per_optimization):.2f} (95% CI with {min(num_iters_per_optimization, n_simulations)} simulations).")
                     print(f"New best hashsets: {best_hashset}")
 
                 # save the optimization function history
                 if save_optimization_fct_history:
                     with open("optimization_fct_history.csv", "a") as f:
-                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}\n")
+                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}, {best_metric_mse_bootstrap:.3f}\n")
             else:
                 # Variable Neighbourhood Structure (VNS): update the function to optimize
                 fct_count += 1
@@ -456,7 +466,7 @@ def test_optimization():
     best_hashset, waiting_time_best = optimization(
         optimization_fct_names=optimization_fct_names,
         num_optimization_iters=100, 
-        num_iters_per_optimization=33,
+        num_iters_per_optimization=250,
         metric_fct=np.mean,
         use_control_variate=True,
         use_mean_rate_constraint=False,

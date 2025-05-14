@@ -46,19 +46,19 @@ class Stats:
         exp_decay = np.exp(-decay_rate * (waiting_times - critical_wait_time))
         return exp_decay / (1 + exp_decay)
 
-    def mse_bootstrap(self, f_statistic, num_bootstrap):
+    def mse_bootstrap(self, f_statistic, num_bootstrap=10000, tolerance=0.05):
         """ Calculates the bootstrap MSE of a statistic of choice and returns the bootstrap statistics.
 
         Args:
             f_statistic (function): Function calculating the statistic of interest (e.g., mean, var, etc.).
                                     Must accept a NumPy array as input and return a scalar.
             num_bootstrap (int): Number of bootstrap draws.
+            tolerance (float): Tolerance wanted for the precision on the true statistic (95% CI half-width < tolerance)
 
         Returns:
             tuple: A tuple containing:
-                - true_stat (float): The true statistic computed from the waiting times.
                 - mse_bootstrap (float): The mean squared error (MSE) of the statistic of interest.
-                - bootstrap_stats (list): The list of bootstrap statistics computed during resampling.
+                - n_simulations (int): # of simulations needed to reach the tolerance.
 
         Raises:
             ValueError: If there are no requests to process.
@@ -79,5 +79,6 @@ class Stats:
             bootstrap_stats.append(f_statistic(resampled_waiting_time))
         
         mse_bootstrap = float(np.mean((np.array(bootstrap_stats) - true_stat) ** 2))
+        n_simulations = int(np.ceil(mse_bootstrap*(1.96/tolerance)**2))
         
-        return (true_stat, mse_bootstrap, bootstrap_stats)
+        return mse_bootstrap, n_simulations
