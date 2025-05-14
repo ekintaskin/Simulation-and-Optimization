@@ -21,7 +21,7 @@ class ParetoPlotter:
         for _ in range(self.n_samples):
             # Generate configuration using swap_one heuristic
             movie_hashsets, _ = self.opt(
-                optimization_fct_name='swap_two',
+                optimization_fct_names=['swap_two'],
                 num_optimization_iters=1,
                 num_iters_per_optimization=50
             )
