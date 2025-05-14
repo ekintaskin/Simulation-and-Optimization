@@ -18,10 +18,19 @@ class Optimization():
         self.print_results = print_results
         self.rng = np.random.default_rng(random_seed)
 
-    def __call__(self, optimization_fct_name, num_optimization_iters=10, num_iters_per_optimization=10, metric_fct=np.mean, use_mean_rate_constraint=False, use_control_variate=False):
+    def __call__(
+        self, 
+        optimization_fct_names, 
+        num_optimization_iters=10, 
+        num_iters_per_optimization=10, 
+        metric_fct=np.mean, 
+        use_mean_rate_constraint=False, 
+        use_control_variate=False,
+    ):
         """
         Optimize the storage configuration based on the requests and storage.
-        :param optimization_fct: name of function to optimize
+        :param optimization_fct_names: list of names of function to optimize Variable Neighbourhood Search (VNS) 
+                                        is used to optimize the function in a cyclic manner
         :param num_optimization_iters: number of optimization iterations
         :param num_iters_per_optimization: number of iterations per optimization
         :param metric_fct: function to calculate the metric (e.g. mean, median)
@@ -32,12 +41,13 @@ class Optimization():
 
         best_metric = np.inf
         best_hashset = None
+        fct_count = 0
         for i in range(num_optimization_iters):
             if self.print_results:
-                print(f"Optimization Iteration {i + 1}/{num_optimization_iters}...")
+                print(f"\nIteration {i + 1}/{num_optimization_iters} using function {optimization_fct_names[fct_count]}")
 
             # Call optimization function
-            optimization_fct = getattr(self, optimization_fct_name)
+            optimization_fct = getattr(self, optimization_fct_names[fct_count])
             movie_hashsets = optimization_fct(best_hashset=best_hashset)
 
             # Compute mean request rate per node and interval for constraints
@@ -70,7 +80,12 @@ class Optimization():
 
                 if self.print_results:
                     print(f"New best metric: {best_metric:.2f}.")
-                    print(f"Movie hashsets: {best_hashset}\n")
+                    print(f"New best hashsets: {best_hashset}")
+            else:
+                # Variable Neighbourhood Structure (VNS): update the function to optimize
+                fct_count += 1
+                if fct_count >= len(optimization_fct_names):
+                    fct_count = 0
 
         return best_hashset, best_metric
 
@@ -134,6 +149,14 @@ class Optimization():
         """
         return self._remove(best_hashset=best_hashset, num_movies_to_remove=2)
     
+    def remove_three(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by removing three movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._remove(best_hashset=best_hashset, num_movies_to_remove=3)
+    
     def replace_one(self, best_hashset:Dict[str, Set[int]]=None):
         """
         Optimize the movie hashset by replacing one movie.
@@ -149,6 +172,14 @@ class Optimization():
         :return: optimized movie hashsets
         """
         return self._replace(best_hashset=best_hashset, num_movies_to_replace=2, fill_storage=False)
+    
+    def replace_three(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by replacing three movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._replace(best_hashset=best_hashset, num_movies_to_replace=3, fill_storage=False)
     
     def replace_one_fill(self, best_hashset:Dict[str, Set[int]]=None):
         """
@@ -166,6 +197,14 @@ class Optimization():
         """
         return self._replace(best_hashset=best_hashset, num_movies_to_replace=2, fill_storage=True)
     
+    def replace_three_fill(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by removing three movies and filling the storage with random movies.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._replace(best_hashset=best_hashset, num_movies_to_replace=3, fill_storage=True)
+    
     def swap_one(self, best_hashset:Dict[str, Set[int]]=None):
         """
         Optimize the movie hashset by swapping one movie between ASN1 and ASN2.
@@ -182,6 +221,14 @@ class Optimization():
         """
         return self._swap(best_hashset=best_hashset, num_movies_to_swap=2)
     
+    def swap_three(self, best_hashset:Dict[str, Set[int]]=None):
+        """
+        Optimize the movie hashset by swapping two movies between ASN1 and ASN2.
+        :param best_hashset: best movie hashset from previous iteration
+        :return: optimized movie hashsets
+        """
+        return self._swap(best_hashset=best_hashset, num_movies_to_swap=3)
+    
     def _remove(self, best_hashset:Dict[str, Set[int]]=None, num_movies_to_remove=1):
         """
         Optimize the movie hashset by removing movies.
@@ -189,7 +236,7 @@ class Optimization():
         :param num_movies_to_remove: number of movies to remove
         :return: optimized movie hashsets
         """
-        best_hashset = copy(best_hashset)
+        best_hashset = copy.deepcopy(best_hashset)
 
         # initialize the movie hashsets with a random configuration
         if best_hashset is None:
@@ -221,7 +268,7 @@ class Optimization():
                              if False, replace movies, i.e. keep the same number of movies
         :return: optimized movie hashsets
         """
-        best_hashset = copy(best_hashset)
+        best_hashset = copy.deepcopy(best_hashset)
 
         # initialize the movie hashsets with a random configuration
         if best_hashset is None:
@@ -311,9 +358,6 @@ class Optimization():
                 continue
             break
 
-        print(f"best_hashset: {best_hashset}")
-        print(f"next_hashset: {next_hashset}")
-
         return next_hashset
 
     def CONSTRAINT_mean_request_rate(self, mean_request_rate):
@@ -381,15 +425,33 @@ def test_optimization():
     """
     Test the optimization class.
     """
+    optimization_fct_names = [
+        "random",
+        "replace_one", 
+        "replace_two", 
+        "replace_three",
+        "swap_one", 
+        "swap_two",
+        "swap_three",
+        "replace_one_fill", 
+        "replace_two_fill", 
+        "replace_three_fill",
+        "remove_one", 
+        "remove_two",
+        "remove_three",
+    ]
+
     optimization = Optimization(
         print_results=True,
         random_seed=3,
     )
     best_hashset, waiting_time_best = optimization(
-        optimization_fct_name="swap_one", 
-        num_optimization_iters=25, 
+        optimization_fct_names=optimization_fct_names,
+        num_optimization_iters=200, 
         num_iters_per_optimization=10,
         metric_fct=np.mean,
+        use_control_variate=False,
+        use_mean_rate_constraint=False,
     )
 
     print(f"\n\nFinal hashset: {best_hashset}")
