@@ -31,7 +31,8 @@ class Optimization():
         use_control_variate=False,
         save_optimization_fct_history=False,
         choose_optimization_fct_randomly=False,
-        decreasing_tolerance=False
+        decreasing_tolerance=False,
+        min_n_simulation_control_variate=5
     ):
         """
         Optimize the storage configuration based on the requests and storage.
@@ -45,7 +46,9 @@ class Optimization():
         :param use_control_variate: whether to use the control variate method
         :param save_optimization_fct_history: whether to save the optimization function history
         :param choose_optimization_fct_randomly: whether to choose the optimization function randomly
-        :param decreasing_tolerance: automatically decrease the tolerance linearly from 100*tolerance to tolerance over the iterations
+        :param decreasing_tolerance: automatically decrease the tolerance linearly from 1 to tolerance over
+        the iterations.
+        :param min_n_simulation_control_variate: minimum number of simulations to use the control variate method
         :return: best movie hashset and its corresponding best metric
         """
         # Simulation class
@@ -80,7 +83,7 @@ class Optimization():
             # Compute bootstrap estimate of the MSE
             requests_bootstrap = simulation.run(movie_hashsets=movie_hashsets)
             bootstrap_stats = Stats(requests_bootstrap)
-            iter_tolerance = np.linspace(100*tolerance, tolerance, num_optimization_iters)[i] if decreasing_tolerance else tolerance
+            iter_tolerance = np.linspace(1, tolerance, num_optimization_iters)[i] if decreasing_tolerance else tolerance
             mse_bootstrap, n_simulations = bootstrap_stats.mse_bootstrap(f_statistic=metric_fct, tolerance=iter_tolerance)
 
             # generate MC or CV estimate
@@ -97,7 +100,7 @@ class Optimization():
                 if use_control_variate: control_variates.append(self.observed_max_request_rate(requests))
 
             # update the best configuration if the mean metric is lower
-            metrics_mean = np.mean(metrics) if not use_control_variate else self.control_variate_estimate(np.array(metrics), np.array(control_variates), mu_CV)
+            metrics_mean = np.mean(metrics) if (not use_control_variate) or n_simulations <= min_n_simulation_control_variate else self.control_variate_estimate(np.array(metrics), np.array(control_variates), mu_CV)
             if metrics_mean < best_metric:
                 best_metric = metrics_mean
                 best_metric_mse_bootstrap = mse_bootstrap
@@ -436,6 +439,8 @@ class Optimization():
         :param mu: theoretical overall request rate
         :return: control estimate of the expected T(requests)
         """
+        if len(X) == 1: return X  # no linear regression possible
+
         # linear regression
         X_mean = np.mean(X)
         Y_mean = np.mean(Y)
@@ -471,7 +476,7 @@ def test_optimization():
         num_optimization_iters=100, 
         num_iters_per_optimization=250,
         metric_fct=np.mean,
-        tolerance=0.05,
+        tolerance=0.01,
         use_control_variate=True,
         use_mean_rate_constraint=False,
         save_optimization_fct_history=False,
