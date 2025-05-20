@@ -1,112 +1,213 @@
-from simulation import Simulation
+# This script runs a simulation of a movie streaming system, optimizes the movie distribution along the storage nodes
+#  using various methods, and compares the performance of the baseline and optimized systems based on waiting times.
+
+
 from time import time
-from stats import Stats
-import matplotlib.pyplot as plt
 import numpy as np
 
+from constants import INITIAL_MOVIE_HASHSET
+from simulation import Simulation
+from stats import Stats, plot_comparison_histogram
+from optimization import Optimization
 
-def main():
-    # Parameters
-    num_runs = 100 # Number of simulation runs
-    threshold = 60 # Acceptable max waiting time threshold in seconds
-    print_results = True
+# The simulation is now put in a function to allow for easier testing and modularity, particularly for plotting.
+# This function runs the simulation for a specified number of runs and collects statistics.
+def run_simulation(num_runs=100, movie_hashsets=None, threshold=60, print_results=False):
+    """
+    Run multiple simulations and collect statistics.
 
-    # Initialize lists to store statistics
-    max_waiting_times = []
+    Args:
+        num_runs (int): Number of simulation runs.
+        movie_hashsets (list): List of movie hashsets to use in the simulation.
+        threshold (int): Acceptable max waiting time threshold in seconds.
+        print_results (bool): Whether to print results for each run.
+
+    Returns a dictionary of per-run metrics.
+    """
+    
+    simulation = Simulation()
+
+    # Initialize lists to store statistics for each run
     mean_waiting_times = []
+    max_waiting_times = []
     var_waiting_times = []
     median_waiting_times = []
     waiting_time_percentiles = []
-    bootstrap_mean_waiting_times = []
+    bootstrap_mse_values = []
+    customers_above_threshold = []
 
-    # Initialize run time
-    run_start_time = time()
-
-    # Simulation class
-    simulation = Simulation()
-
+    # Run the simulation for the specified number of runs
     for i in range(num_runs):
         if print_results:
-            print(f"Run {i + 1}")
-        
-        # run simulation
-        requests = simulation.run()
+            print(f"Simulation run {i + 1}/{num_runs}")
 
-        # Initialize Statistics
+        # Run simulation with/without optimized hashset
+        requests = simulation.run(movie_hashsets=movie_hashsets)
+
+        # Collect statistics
         stats = Stats(requests)
-        waiting_time = stats.get_waiting_time()
+        waiting_times = stats.get_waiting_time()
 
-        # Calculate statistics
-        max_waiting_time = np.max(waiting_time)
-        max_waiting_times.append(max_waiting_time)
+        # Calculate statistics, and append them to the lists
+        mean_waiting_times.append(np.mean(waiting_times))
+        max_waiting_times.append(np.max(waiting_times))
+        var_waiting_times.append(np.var(waiting_times))
+        median_waiting_times.append(np.median(waiting_times))
+        waiting_time_percentiles.append(np.percentile(waiting_times, [50, 90, 95, 99]))
 
-        mean_waiting_time = np.mean(waiting_time)
-        mean_waiting_times.append(mean_waiting_time)
+        mse, _ = stats.mse_bootstrap(np.mean, num_bootstrap=100)
+        bootstrap_mse_values.append(mse)
 
-        var_waiting_time = np.var(waiting_time)
-        var_waiting_times.append(var_waiting_time)
+        count_above, _ = stats.num_customers_above_threshold(threshold)
+        customers_above_threshold.append(count_above)
 
-        median_waiting_time = np.median(waiting_time)
-        median_waiting_times.append(median_waiting_time)
-
-        waiting_time_percentile = np.percentile(waiting_time, [50, 90, 95, 99])
-        waiting_time_percentiles.append(waiting_time_percentile)
-
-        (true_mean_waiting_time, bootstrap_mean_waiting_time_mse, bootstrap_waiting_time_stats) = stats.mse_bootstrap(np.mean, num_bootstrap=100)
-        bootstrap_mean_waiting_times.append(bootstrap_mean_waiting_time_mse)
-
-        print(f"Mean, Median, Max and Variance of Waiting Time: {mean_waiting_time:.2f} s, {median_waiting_time:.2f} s, {max_waiting_time:.2f} s,  {var_waiting_time:.2f} s")
-        
-        # Print the first few bootstrap statistics for inspection
-        # print(f"First 5 Bootstrap Mean Computations: {bootstrap_waiting_time_stats[:5]}")
-
-        print(f"MSE of the Bootstrap Mean Waiting Time compared to true Mean: {bootstrap_mean_waiting_time_mse:.2f} s")
-        
-        print(f"Maximum Waiting Time 50th, 90th, 95th and 99th percentiles: {waiting_time_percentile} \n")
-
-        count_above_threshold, percentage_above_threshold = stats.num_customers_above_threshold(threshold)
-        print(f"Customers above {threshold:.2f} s: {count_above_threshold}, In percentage: {percentage_above_threshold:.2f} % \n")
+    return {
+        "mean": mean_waiting_times,
+        "max": max_waiting_times,
+        "var": var_waiting_times,
+        "median": median_waiting_times,
+        "percentiles": waiting_time_percentiles,
+        "bootstrap_mse": bootstrap_mse_values,
+        "above_threshold": customers_above_threshold,
+    }
 
 
-    plt.figure(figsize=(8, 6))
-    plt.hist(max_waiting_times, bins=20, color='skyblue', edgecolor='black')
-    plt.title('Histogram of Maximum Waiting Times')
-    plt.xlabel('Maximum Waiting Time (s)')
-    plt.ylabel('Frequency')
-    plt.show()
+def main():
+    # === General Parameters ===
+    num_runs = 100
+    threshold = 60
+    print_results = False
 
-    plt.figure(figsize=(8, 6))
-    plt.hist(mean_waiting_times, bins=20, color='skyblue', edgecolor='black')
-    plt.title('Histogram of Mean Waiting Times')
-    plt.xlabel('Mean Waiting Time (s)')
-    plt.ylabel('Frequency')
-    plt.show()
+    # === Optimization Parameters ===
+    optimization_fct_names = [
+        "random",
+        "replace_one", 
+        "replace_two",
+        "swap_one", 
+        "swap_two",
+        "swap_three",
+        "replace_one_fill", 
+        "replace_two_fill",
+    ]
+    num_optimization_iters = 100
+    num_iters_per_optimization = 250
 
-    plt.figure(figsize=(8, 6))
-    plt.hist(median_waiting_times, bins=20, color='skyblue', edgecolor='black')
-    plt.title('Histogram of Median Waiting Times')
-    plt.xlabel('Median Waiting Time (s)')
-    plt.ylabel('Frequency')
-    plt.show()
+    metric_fct = np.mean # The metric function to optimize. Options: np.mean, np.median, np.max, np.var
+    use_control_variate = True # Use control variate to reduce variance in the optimization process
+    use_mean_rate_constraint = True # Use mean rate constraint to ensure the average waiting time is below a certain threshold
+    save_optimization_fct_history = False # Save the history of the optimization function values
+    choose_optimization_fct_randomly = False # Choose the optimization function randomly for each iteration
 
-    plt.figure(figsize=(8, 6))
-    plt.hist(var_waiting_times, bins=20, color='skyblue', edgecolor='black')
-    plt.title('Histogram of Waiting Times Variance')
-    plt.xlabel('Waiting Time Variance (s)')
-    plt.ylabel('Frequency')
-    plt.show()
+    overall_start_time = time() 
 
-    plt.figure(figsize=(8, 6))
-    plt.hist(count_above_threshold, bins=20, color='skyblue', edgecolor='black')
-    plt.title('Histogram of Customers waiting more than the threshold')
-    plt.xlabel('Waiting Time Variance (s)')
-    plt.ylabel('Frequency')
-    plt.show()
+    # === Run Baseline Simulation ===
+    print("Running baseline simulations...")
+    baseline_stats = run_simulation(
+        num_runs=num_runs,
+        movie_hashsets=INITIAL_MOVIE_HASHSET,
+        threshold=threshold,
+        print_results=print_results
+    )
+
+    baseline_end_time = time()
+    print(f"Baseline simulation time: {baseline_end_time - overall_start_time:.2f} seconds")
+
+    # === Run Optimization ===
+    # Necessary only once, as the optimization function is not called in the simulation.
+
+    # When dealing with plotting, be careful to comment out this optimization block if the optimized solution is already known.
+    # This is to avoid re-running the optimization process unnecessarily. 
+    # Don't forget to uncomment it if you want to run the optimization process again.
+
+    """     
+    print("Running optimization...")
+    optimizer = Optimization(print_results=True, random_seed=0) # Set a random seed for reproducibility
+    best_hashset, best_metric = optimizer(
+        optimization_fct_names=optimization_fct_names,
+        num_optimization_iters=num_optimization_iters,
+        num_iters_per_optimization=num_iters_per_optimization,
+        metric_fct=metric_fct,
+        use_control_variate=use_control_variate,
+        use_mean_rate_constraint=use_mean_rate_constraint,
+        save_optimization_fct_history=save_optimization_fct_history,
+        choose_optimization_fct_randomly=choose_optimization_fct_randomly,
+    )
+
+    optimization_end_time = time()
+    print(f"\nFinal best hashset:\n{best_hashset}")
+    print(f"Best waiting time metric: {best_metric:.2f}")
+    print(f"Optimization time: {optimization_end_time - baseline_end_time:.2f} seconds") 
+    """
 
 
+    # When dealing with plotting, it saves time and ressources to comment out the optimization block if the optimized solution is already known.
+    # Simply copy the optimized hashset and metric here to avoid re-running the optimization process unnecessarily.
 
-    run_end_time = time()
-    print(f"Elapsed time: {run_end_time - run_start_time:.2f} seconds")
+    best_hashset = {'ASN1': {1, 7, 8, 9}, 'ASN2': {0, 1, 5, 7}, 'MSN': {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}} # The best hashset found during the optimization process
+
+
+    # === Run Optimized Simulation ===
+    # The optimized simulation is run with the best hashset found during the optimization process.
+    print("Running optimized simulations...")
+    optimized_stats = run_simulation(
+        num_runs=num_runs,
+        movie_hashsets=best_hashset,
+        threshold=threshold,
+        print_results=print_results
+    )
+
+    final_time = time()
+    # print(f"Optimized simulation time: {final_time - optimization_end_time:.2f} seconds") # To comment/uncomment depdening if we run the optimization process or not
+    print(f"\nTotal runtime: {final_time - overall_start_time:.2f} seconds")
+    
+    # === Comparison Plots ===
+    # Plot histograms comparing the baseline and optimized simulation statistics
+    # When dealing with plotting, if the optimized solution is already known,
+    # be careful to comment out the optimization block and uncomment the best_hashset line just above the current line.
+    # This is to avoid re-running the optimization process unnecessarily. 
+
+    plot_comparison_histogram(
+        baseline_stats["max"],
+        optimized_stats["max"],
+        "Histogram of Maximum Waiting Times",
+        "Maximum Waiting Time (s)"
+    )
+
+    plot_comparison_histogram(
+        baseline_stats["mean"],
+        optimized_stats["mean"],
+        "Histogram of Mean Waiting Times",
+        "Mean Waiting Time (s)"
+    )
+
+    plot_comparison_histogram(
+        baseline_stats["median"],
+        optimized_stats["median"],
+        "Histogram of Median Waiting Times",
+        "Median Waiting Time (s)"
+    )
+
+    plot_comparison_histogram(
+        baseline_stats["var"],
+        optimized_stats["var"],
+        "Histogram of Waiting Time Variance",
+        "Variance"
+    )
+
+    plot_comparison_histogram(
+        baseline_stats["above_threshold"],
+        optimized_stats["above_threshold"],
+        "Histogram of Customers Waiting > Threshold",
+        "Number of Customers"
+    )
+
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+

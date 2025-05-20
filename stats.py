@@ -82,3 +82,34 @@ class Stats:
         n_simulations = int(np.ceil(mse_bootstrap*(1.96/tolerance)**2))
         
         return mse_bootstrap, n_simulations
+    
+
+# Independent function to plot histograms
+# This function is not part of the Stats class and is used for plotting
+def plot_comparison_histogram(
+    baseline_data, optimized_data, title, xlabel, bins=20
+):
+    """
+    Plot a histogram comparing baseline and optimized simulation statistics.
+
+    Args:
+        baseline_data (list or np.array): Data from baseline configuration.
+        optimized_data (list or np.array): Data from optimized configuration.
+        title (str): Plot title.
+        xlabel (str): Label for the x-axis.
+        bins (int): Number of histogram bins.
+    """
+    plt.figure(figsize=(8, 6))
+    plt.hist(baseline_data, bins=bins, alpha=0.6, label='Baseline', color='skyblue', edgecolor='black')
+    plt.hist(optimized_data, bins=bins, alpha=0.6, label='Optimized', color='salmon', edgecolor='black')
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.grid(True)
+    # Save the plot with a unique filename based on the title
+    filename = title.lower().replace(" ", "_") + ".png"
+    plt.savefig(filename, bbox_inches='tight')
+    plt.show() # Shows the plot without blocking the script
+    # plt.show(block=False) # Shows the plot without blocking the script
+    # plt.close()
