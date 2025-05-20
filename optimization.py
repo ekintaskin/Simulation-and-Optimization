@@ -26,11 +26,12 @@ class Optimization():
         num_optimization_iters=10,
         num_iters_per_optimization=250,
         metric_fct=np.mean,
-        tolerance=0.1,
+        tolerance=0.01,
         use_mean_rate_constraint=False, 
         use_control_variate=False,
         save_optimization_fct_history=False,
         choose_optimization_fct_randomly=False,
+        decreasing_tolerance=False
     ):
         """
         Optimize the storage configuration based on the requests and storage.
@@ -44,6 +45,7 @@ class Optimization():
         :param use_control_variate: whether to use the control variate method
         :param save_optimization_fct_history: whether to save the optimization function history
         :param choose_optimization_fct_randomly: whether to choose the optimization function randomly
+        :param decreasing_tolerance: automatically decrease the tolerance linearly from 100*tolerance to tolerance over the iterations
         :return: best movie hashset and its corresponding best metric
         """
         # Simulation class
@@ -78,7 +80,8 @@ class Optimization():
             # Compute bootstrap estimate of the MSE
             requests_bootstrap = simulation.run(movie_hashsets=movie_hashsets)
             bootstrap_stats = Stats(requests_bootstrap)
-            mse_bootstrap, n_simulations = bootstrap_stats.mse_bootstrap(f_statistic=metric_fct, tolerance=tolerance)
+            iter_tolerance = np.linspace(100*tolerance, tolerance, num_optimization_iters)[i] if decreasing_tolerance else tolerance
+            mse_bootstrap, n_simulations = bootstrap_stats.mse_bootstrap(f_statistic=metric_fct, tolerance=iter_tolerance)
 
             # generate MC or CV estimate
             metrics = []
@@ -468,10 +471,12 @@ def test_optimization():
         num_optimization_iters=100, 
         num_iters_per_optimization=250,
         metric_fct=np.mean,
+        tolerance=0.05,
         use_control_variate=True,
         use_mean_rate_constraint=False,
         save_optimization_fct_history=False,
         choose_optimization_fct_randomly=False,
+        decreasing_tolerance=True
     )
 
     print(f"\n\nFinal hashset: {best_hashset}")
