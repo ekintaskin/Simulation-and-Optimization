@@ -102,10 +102,12 @@ def plot_comparison_histogram(
     plt.figure(figsize=(8, 6))
     plt.hist(baseline_data, bins=bins, alpha=0.6, label='Baseline', color='skyblue', edgecolor='black')
     plt.hist(optimized_data, bins=bins, alpha=0.6, label='Optimized', color='salmon', edgecolor='black')
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel('Frequency')
-    plt.legend()
+    plt.title(title, fontsize=24)
+    plt.xlabel(xlabel, fontsize=18)
+    plt.ylabel('Frequency', fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.legend(fontsize=18)
     plt.grid(True)
     # Save the plot with a unique filename based on the title
     filename = title.lower().replace(" ", "_") + ".png"
