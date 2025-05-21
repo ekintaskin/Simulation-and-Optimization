@@ -115,7 +115,7 @@ class Optimization():
                 # save the optimization function history
                 if save_optimization_fct_history:
                     with open("optimization_fct_history.csv", "a") as f:
-                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}, {best_metric_mse_bootstrap:.3f}\n")
+                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}, {best_metric_mse_bootstrap:.3f}, {constraint_approved}\n")
             else:
                 # Variable Neighbourhood Structure (VNS): update the function to optimize
                 fct_count += 1
