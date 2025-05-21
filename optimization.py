@@ -50,6 +50,7 @@ class Optimization():
         best_metric = np.inf
         best_hashset = None
         fct_count = 0
+        constraint_approved = None
         for i in range(num_optimization_iters):
             if self.print_results:
                 print(f"\nIteration {i + 1}/{num_optimization_iters} using function {optimization_fct_names[fct_count]}")
@@ -66,11 +67,12 @@ class Optimization():
             if use_control_variate or use_mean_rate_constraint:
                 mean_request_rate = compute_mean_request_rate(movies_hashsets=movie_hashsets)
                 mu_CV = np.max(np.array([mean_request_rate[storage_id] for storage_id in STORAGE_IDS]).flatten())
-                if use_mean_rate_constraint:
-                    if not self.CONSTRAINT_mean_request_rate(mean_request_rate):
-                        if self.print_results:
-                            print(f"Request rate greater than handling rate. Skipping...")
-                        continue
+
+                constraint_approved = self.CONSTRAINT_mean_request_rate(mean_request_rate)
+                if use_mean_rate_constraint and not constraint_approved:
+                    if self.print_results:
+                        print(f"Request rate greater than handling rate. Skipping...")
+                    continue
 
             metrics = []
             control_variates = []
@@ -97,7 +99,7 @@ class Optimization():
                 # save the optimization function history
                 if save_optimization_fct_history:
                     with open("optimization_fct_history.csv", "a") as f:
-                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}\n")
+                        f.write(f"{i}, {optimization_fct_names[fct_count]}, {best_metric:.3f}, {constraint_approved}\n")
             else:
                 # Variable Neighbourhood Structure (VNS): update the function to optimize
                 fct_count += 1
@@ -434,10 +436,13 @@ class Optimization():
 
         return b + a*mu
 
+
+
 def test_optimization():
     """
     Test the optimization class.
     """
+    # This is the recommended list of optimization functions to use
     optimization_fct_names = [
         "random",
         "replace_one", 
@@ -459,9 +464,9 @@ def test_optimization():
         num_iters_per_optimization=33,
         metric_fct=np.mean,
         use_control_variate=True,
-        use_mean_rate_constraint=False,
+        use_mean_rate_constraint=True,
         save_optimization_fct_history=False,
-        choose_optimization_fct_randomly=False,
+        choose_optimization_fct_randomly=True,
     )
 
     print(f"\n\nFinal hashset: {best_hashset}")
