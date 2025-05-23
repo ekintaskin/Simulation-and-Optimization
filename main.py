@@ -88,6 +88,7 @@ def main():
         "swap_three",
         "replace_one_fill", 
         "replace_two_fill",
+        "replace_three_fill",
     ]
     num_optimization_iters = 100
     num_iters_per_optimization = 250
@@ -97,6 +98,7 @@ def main():
     use_mean_rate_constraint = True # Use mean rate constraint to ensure the average waiting time is below a certain threshold
     save_optimization_fct_history = False # Save the history of the optimization function values
     choose_optimization_fct_randomly = False # Choose the optimization function randomly for each iteration
+    decreasing_tolerance = True # Decrease the tolerance for the optimization process over time
 
     overall_start_time = time() 
 
@@ -119,7 +121,7 @@ def main():
     # This is to avoid re-running the optimization process unnecessarily. 
     # Don't forget to uncomment it if you want to run the optimization process again.
 
-    """     
+    """
     print("Running optimization...")
     optimizer = Optimization(print_results=True, random_seed=0) # Set a random seed for reproducibility
     best_hashset, best_metric = optimizer(
@@ -131,6 +133,7 @@ def main():
         use_mean_rate_constraint=use_mean_rate_constraint,
         save_optimization_fct_history=save_optimization_fct_history,
         choose_optimization_fct_randomly=choose_optimization_fct_randomly,
+        decreasing_tolerance=decreasing_tolerance,
     )
 
     optimization_end_time = time()
@@ -142,8 +145,10 @@ def main():
 
     # When dealing with plotting, it saves time and ressources to comment out the optimization block if the optimized solution is already known.
     # Simply copy the optimized hashset and metric here to avoid re-running the optimization process unnecessarily.
+    # This is the best hashset found during the optimization process
+    best_hashset = {'ASN1': {8, 2, 6, 7}, 'ASN2': {8, 9, 5, 7}, 'MSN': {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}} 
+    
 
-    best_hashset = {'ASN1': {1, 7, 8, 9}, 'ASN2': {0, 1, 5, 7}, 'MSN': {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}} # The best hashset found during the optimization process
 
 
     # === Run Optimized Simulation ===

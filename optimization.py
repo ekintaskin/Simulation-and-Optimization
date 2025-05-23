@@ -80,6 +80,11 @@ class Optimization():
                 if use_mean_rate_constraint and not constraint_approved:
                     if self.print_results:
                         print(f"Request rate greater than handling rate. Skipping...")
+                        
+                    # Variable Neighbourhood Structure (VNS): update the function to optimize
+                    fct_count += 1
+                    if fct_count >= len(optimization_fct_names):
+                        fct_count = 0
                     continue
 
             # Compute bootstrap estimate of the MSE
@@ -470,6 +475,7 @@ def test_optimization():
         "swap_three",
         "replace_one_fill", 
         "replace_two_fill",
+        "replace_three_fill",
     ]
 
     optimization = Optimization(
