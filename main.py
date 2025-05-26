@@ -118,6 +118,41 @@ def main(best_hashset=None):
     baseline_end_time = time()
     print(f"Baseline simulation time: {baseline_end_time - overall_start_time:.2f} seconds")
 
+
+    # Plot Baseline-only histograms
+    plot_baseline_histogram(
+        baseline_stats["max"],
+        "1st Baseline Histogram of Maximum Waiting Times",
+        "Maximum Waiting Time (s)"
+    )
+
+    plot_baseline_histogram(
+        baseline_stats["mean"],
+        "1st Baseline Histogram of Mean Waiting Times",
+        "Mean Waiting Time (s)"
+    )
+
+    plot_baseline_histogram(
+        baseline_stats["median"],
+        "1st Baseline Histogram of Median Waiting Times",
+        "Median Waiting Time (s)"
+    )
+
+    plot_baseline_histogram(
+        baseline_stats["var"],
+        "1st Baseline Histogram of Waiting Time Variance",
+        "Variance"
+    )
+
+    plot_baseline_histogram(
+        baseline_stats["above_threshold"],
+        "1st Baseline Histogram of Customers Waiting above Threshold",
+        "Number of Customers"
+    )
+
+
+
+
     # === Run Optimization ===
     # Necessary only once, as the optimization function is not called in the simulation.
 
@@ -195,40 +230,10 @@ def main(best_hashset=None):
     plot_comparison_histogram(
         baseline_stats["above_threshold"],
         optimized_stats["above_threshold"],
-        "Histogram of Customers Waiting > Threshold",
+        "Histogram of Customers Waiting above Threshold",
         "Number of Customers"
     )
 
-    # Plot Baseline-only histograms
-    plot_baseline_histogram(
-        baseline_stats["max"],
-        "Baseline Histogram of Maximum Waiting Times",
-        "Maximum Waiting Time (s)"
-    )
-
-    plot_baseline_histogram(
-        baseline_stats["mean"],
-        "Baseline Histogram of Mean Waiting Times",
-        "Mean Waiting Time (s)"
-    )
-
-    plot_baseline_histogram(
-        baseline_stats["median"],
-        "Baseline Histogram of Median Waiting Times",
-        "Median Waiting Time (s)"
-    )
-
-    plot_baseline_histogram(
-        baseline_stats["var"],
-        "Baseline Histogram of Waiting Time Variance",
-        "Variance"
-    )
-
-    plot_baseline_histogram(
-        baseline_stats["above_threshold"],
-        "Baseline Histogram of Customers Waiting > Threshold",
-        "Number of Customers"
-    )
 
 
 if __name__ == "__main__":

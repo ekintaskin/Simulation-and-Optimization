@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from request import Request
 
@@ -93,20 +94,81 @@ def plot_comparison_histogram(
         xlabel (str): Label for the x-axis.
         bins (int): Number of histogram bins.
     """
-    plt.figure(figsize=(8, 6))
-    plt.hist(baseline_data, bins=bins, alpha=0.6, label='Baseline', color='skyblue', edgecolor='black')
-    plt.hist(optimized_data, bins=bins, alpha=0.6, label='Optimized', color='salmon', edgecolor='black')
-    plt.title(title, fontsize=24)
-    plt.xlabel(xlabel, fontsize=18)
-    plt.ylabel('Frequency', fontsize=18)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
-    plt.legend(fontsize=18)
-    plt.grid(True)
-    # Save the plot with a unique filename based on the title
+    # plt.figure(figsize=(8, 6))
+    # plt.hist(baseline_data, bins=bins, alpha=0.6, label='Baseline', color='skyblue', edgecolor='black')
+    # plt.hist(optimized_data, bins=bins, alpha=0.6, label='Optimized', color='salmon', edgecolor='black')
+    # plt.title(title, fontsize=24)
+    # plt.xlabel(xlabel, fontsize=18)
+    # plt.ylabel('Frequency', fontsize=18)
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.legend(fontsize=18)
+    # plt.grid(True)
+    # # Create 'Plots' folder if it doesn't exist
+    # os.makedirs("Plots", exist_ok=True)
+    # # Save the plot with a unique filename based on the title
+    # filename = title.lower().replace(" ", "_") + ".png"
+    # filepath = os.path.join("Plots", filename)
+    # plt.savefig(filepath, bbox_inches='tight')
+    # plt.show()
+    # # plt.show(block=False) # Shows the plot without blocking the script
+    # # plt.close()
+
+
+    # plt.figure(figsize=(8, 6))
+
+    # # Compute histograms manually
+    # counts_baseline, bins_baseline = np.histogram(baseline_data, bins=bins)
+    # counts_optimized, bins_optimized = np.histogram(optimized_data, bins=bins)
+
+    # # Compute bin centers
+    # bin_centers = 0.5 * (bins_baseline[1:] + bins_baseline[:-1])
+    # width = (bins_baseline[1] - bins_baseline[0]) * 0.4
+
+    # # Plot side-by-side bars
+    # plt.bar(bin_centers - width/2, counts_baseline, width=width, alpha=0.7, label='Baseline', color='skyblue', edgecolor='black')
+    # plt.bar(bin_centers + width/2, counts_optimized, width=width, alpha=0.7, label='Optimized', color='salmon', edgecolor='black')
+
+    # plt.title(title, fontsize=24)
+    # plt.xlabel(xlabel, fontsize=18)
+    # plt.ylabel("Frequency", fontsize=18)
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.legend(fontsize=18)
+    # plt.grid(True)
+
+    # os.makedirs("Plots", exist_ok=True)
+    # filename = title.lower().replace(" ", "_") + ".png"
+    # plt.savefig(os.path.join("Plots", filename), bbox_inches='tight')
+    # plt.show()
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+
+    # Plot baseline
+    axes[0].hist(baseline_data, bins=bins, color='skyblue', edgecolor='black')
+    axes[0].set_title("1st Baseline", fontsize=18)
+    axes[0].set_xlabel(xlabel, fontsize=14)
+    axes[0].set_ylabel("Frequency", fontsize=14)
+    axes[0].tick_params(axis='both', labelsize=12)
+    axes[0].grid(True)
+
+    # Plot optimized
+    axes[1].hist(optimized_data, bins=bins, color='salmon', edgecolor='black')
+    axes[1].set_title("Optimized", fontsize=18)
+    axes[1].set_xlabel(xlabel, fontsize=14)
+    axes[1].tick_params(axis='both', labelsize=12)
+    axes[1].grid(True)
+
+    # Overall title
+    fig.suptitle(title, fontsize=24)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    # Save in 'Plots' folder
+    os.makedirs("Plots", exist_ok=True)
     filename = title.lower().replace(" ", "_") + ".png"
-    plt.savefig(filename, bbox_inches='tight')
-    plt.show() # Shows the plot without blocking the script
+    filepath = os.path.join("Plots", filename)
+    plt.savefig(filepath, bbox_inches='tight')
+    plt.show()
 
 # Independent function to plot a single histogram (Baseline only)
 def plot_baseline_histogram(data, title, xlabel, bins=20):
@@ -128,8 +190,11 @@ def plot_baseline_histogram(data, title, xlabel, bins=20):
     plt.yticks(fontsize=14)
     plt.legend(fontsize=18)
     plt.grid(True)
+    # Create 'Plots' folder if it doesn't exist
+    os.makedirs("Plots", exist_ok=True)
     # Save the plot with a unique filename based on the title
     filename = "baseline_" + title.lower().replace(" ", "_") + ".png"
-    plt.savefig(filename, bbox_inches='tight')
+    filepath = os.path.join("Plots", filename)
+    plt.savefig(filepath, bbox_inches='tight')
     plt.show()
 
