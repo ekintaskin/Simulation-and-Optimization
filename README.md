@@ -51,7 +51,7 @@ If this is the case, the storage units accumulate requests in a queue, greatly i
 - *main.py* : Main script for running the simulation and optimization and creating various plots.
 - *utils.py* : Helper functions for the simulation and optimization.
 - *constants.py* : Fixed constants used in the simulation.
-- *pareto.py* : *ParetoPlotter* module for plotting the Pareto front of the optimization results.
+- *plot_pareto.py* : Script for plotting the Pareto front of the optimization results.
 - *optimization_analyse* : Helper script to analyze the choice of assignment generation functions during optimization which resulted in better assignment.
 
 ## Quickstart
