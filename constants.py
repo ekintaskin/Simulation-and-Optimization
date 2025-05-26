@@ -39,19 +39,19 @@ MOVIE_SIZES = {
     5: 900, 6: 1000, 7: 750, 8: 700, 9: 1100
 }
 
-# 1st baseline movie hashset
-INITIAL_MOVIE_HASHSET = {
-    "MSN": {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-    "ASN1": {2, 3, 9},
-    "ASN2": {2, 3, 9}
-}
-
-# # 2nd baseline movie hashset
+# # 1st baseline movie hashset
 # INITIAL_MOVIE_HASHSET = {
 #     "MSN": {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 #     "ASN1": {2, 3, 9},
 #     "ASN2": {2, 3, 9}
 # }
+
+# 2nd baseline movie hashset
+INITIAL_MOVIE_HASHSET = {
+    "MSN": {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+    "ASN1": {2, 3, 9},
+    "ASN2": {2, 3, 9}
+}
 
 STORAGE_SIZES = {
     "MSN": np.inf,
