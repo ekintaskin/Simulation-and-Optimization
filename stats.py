@@ -112,6 +112,33 @@ def plot_comparison_histogram(
     # Save the plot with a unique filename based on the title
     filename = title.lower().replace(" ", "_") + ".png"
     plt.savefig(filename, bbox_inches='tight')
-    plt.show() # Shows the plot without blocking the script
+    plt.show()
     # plt.show(block=False) # Shows the plot without blocking the script
     # plt.close()
+
+# Independent function to plot a single histogram (Baseline only)
+def plot_baseline_histogram(data, title, xlabel, bins=20):
+    """
+    Plot a histogram for baseline simulation statistics.
+
+    Args:
+        data (list or np.array): Data from baseline configuration.
+        title (str): Plot title.
+        xlabel (str): Label for the x-axis.
+        bins (int): Number of histogram bins.
+    """
+    plt.figure(figsize=(8, 6))
+    plt.hist(data, bins=bins, alpha=0.7, color='skyblue', edgecolor='black', label='Baseline')
+    plt.title(title, fontsize=24)
+    plt.xlabel(xlabel, fontsize=18)
+    plt.ylabel('Frequency', fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.legend(fontsize=18)
+    plt.grid(True)
+    # Save the plot with a unique filename based on the title
+    filename = "baseline_" + title.lower().replace(" ", "_") + ".png"
+    plt.savefig(filename, bbox_inches='tight')
+    plt.show()
+
+
