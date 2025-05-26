@@ -39,6 +39,6 @@ class Storage:
                 request.time_handled = process_start_time + delta_time_handle
                 request.time_served = request.time_handled + request.time_movie_service + delta_time_serve_random
 
-                process_start_time = request.time_handled # need to check if this is the correct time to start the next request (@served or @handled)
+                process_start_time = request.time_handled # process the next request at handling time
 
         return arrival_sorted_requests

@@ -1,7 +1,3 @@
-# This script runs a simulation of a movie streaming system, optimizes the movie distribution along the storage nodes
-#  using various methods, and compares the performance of the baseline and optimized systems based on waiting times.
-
-
 from time import time
 import numpy as np
 
@@ -9,6 +5,9 @@ from constants import INITIAL_MOVIE_HASHSET
 from simulation import Simulation
 from stats import Stats, plot_comparison_histogram
 from optimization import Optimization
+
+# This script runs a simulation of a movie streaming system, optimizes the movie distribution along the storage nodes
+#  using various methods, and compares the performance of the baseline and optimized systems based on waiting times.
 
 # The simulation is now put in a function to allow for easier testing and modularity, particularly for plotting.
 # This function runs the simulation for a specified number of runs and collects statistics.
@@ -72,7 +71,12 @@ def run_simulation(num_runs=100, movie_hashsets=None, threshold=60, print_result
     }
 
 
-def main():
+def main(best_hashset=None):
+    """
+    Main function to run the simulation and optimization process.
+    :param best_hashset (optional): best hashset found during the optimization process. Skipp the optimization block.
+    """
+
     # === General Parameters ===
     num_runs = 100
     threshold = 60
@@ -117,39 +121,28 @@ def main():
     # === Run Optimization ===
     # Necessary only once, as the optimization function is not called in the simulation.
 
-    # When dealing with plotting, be careful to comment out this optimization block if the optimized solution is already known.
-    # This is to avoid re-running the optimization process unnecessarily. 
-    # Don't forget to uncomment it if you want to run the optimization process again.
+    # When dealing with plotting, the optimization block is skipped if the optimized solution is already known.
+    # This is to avoid re-running the optimization process unnecessarily.
 
-    """
-    print("Running optimization...")
-    optimizer = Optimization(print_results=True, random_seed=0) # Set a random seed for reproducibility
-    best_hashset, best_metric = optimizer(
-        optimization_fct_names=optimization_fct_names,
-        num_optimization_iters=num_optimization_iters,
-        num_iters_per_optimization=num_iters_per_optimization,
-        metric_fct=metric_fct,
-        use_control_variate=use_control_variate,
-        use_mean_rate_constraint=use_mean_rate_constraint,
-        save_optimization_fct_history=save_optimization_fct_history,
-        choose_optimization_fct_randomly=choose_optimization_fct_randomly,
-        decreasing_tolerance=decreasing_tolerance,
-    )
+    if best_hashset is None:
+        print("Running optimization...")
+        optimizer = Optimization(print_results=True, random_seed=0) # Set a random seed for reproducibility
+        best_hashset, best_metric = optimizer(
+            optimization_fct_names=optimization_fct_names,
+            num_optimization_iters=num_optimization_iters,
+            num_iters_per_optimization=num_iters_per_optimization,
+            metric_fct=metric_fct,
+            use_control_variate=use_control_variate,
+            use_mean_rate_constraint=use_mean_rate_constraint,
+            save_optimization_fct_history=save_optimization_fct_history,
+            choose_optimization_fct_randomly=choose_optimization_fct_randomly,
+            decreasing_tolerance=decreasing_tolerance,
+        )
 
-    optimization_end_time = time()
-    print(f"\nFinal best hashset:\n{best_hashset}")
-    print(f"Best waiting time metric: {best_metric:.2f}")
-    print(f"Optimization time: {optimization_end_time - baseline_end_time:.2f} seconds") 
-    """
-
-
-    # When dealing with plotting, it saves time and ressources to comment out the optimization block if the optimized solution is already known.
-    # Simply copy the optimized hashset and metric here to avoid re-running the optimization process unnecessarily.
-    # This is the best hashset found during the optimization process
-    best_hashset = {'ASN1': {8, 2, 6, 7}, 'ASN2': {8, 9, 5, 7}, 'MSN': {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}} 
-    
-
-
+        optimization_end_time = time()
+        print(f"\nFinal best hashset:\n{best_hashset}")
+        print(f"Best waiting time metric: {best_metric:.2f}")
+        print(f"Optimization time: {optimization_end_time - baseline_end_time:.2f} seconds")
 
     # === Run Optimized Simulation ===
     # The optimized simulation is run with the best hashset found during the optimization process.
@@ -208,7 +201,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # This is the best hashset found during the optimization process
+    best_hashset = {'ASN1': {8, 2, 6, 7}, 'ASN2': {8, 9, 5, 7}, 'MSN': {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}}
+
+    # feeding the best_hashset to the main function avoid recomputing the optimization and focuses on plotting
+    main(best_hashset)
 
 
 

@@ -1,13 +1,11 @@
 import numpy as np
-import pandas as pd
 import copy
 from typing import Dict, Set
-import matplotlib.pyplot as plt
 
 from simulation import Simulation
 from stats import Stats
 from constants import STORAGE_IDS, STORAGE_SIZES, MOVIES_IDS, MOVIE_SIZES, STORAGE_HANDLE_TIME_BETA, TIME_INTERVALS
-from utils import compute_mean_request_rate, compute_overall_request_rate
+from utils import compute_mean_request_rate
 
 
 class Optimization():
@@ -47,7 +45,7 @@ class Optimization():
         :param save_optimization_fct_history: whether to save the optimization function history
         :param choose_optimization_fct_randomly: whether to choose the optimization function randomly
         :param decreasing_tolerance: automatically decrease the tolerance linearly from 1 to tolerance over
-        the iterations.
+                                        the iterations.
         :param min_n_simulation_control_variate: minimum number of simulations to use the control variate method
         :return: best movie hashset and its corresponding best metric
         """
@@ -458,7 +456,6 @@ class Optimization():
         b = X_mean - a * Y_mean
 
         return b + a*mu
-
 
 
 def test_optimization():

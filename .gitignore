@@ -1,3 +1,4 @@
 .idea
 **__pycache__**
-speed_test.py
+OLD/speed_test.py
+OLD/*

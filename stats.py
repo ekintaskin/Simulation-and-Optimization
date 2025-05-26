@@ -1,19 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from request import Request
-from constants import STORAGE_IDS, TIME_INTERVALS
-# from storage import Storage
 
 class Stats:
-    def __init__(self, requests): # Will deal with "requests" in simulation.py where Stats is called upon
-        # self.requests = [req for req in requests]
-        # self.requests = [req for req in requests if req.processed]
+    def __init__(self, requests):
         self.requests = [req for req in requests if isinstance(req, Request) and req.to_be_processed]
         
         # Unique print set to replace the ones below
         if not self.requests:
             print("No valid requests to process. Skipping statistics for this run.")
-        
     
         # Prints added by Nathan to check if all the requests are correctly processed
         # Showed that 100% of them are processed as of March 26th and April 2nd
@@ -82,7 +77,6 @@ class Stats:
         n_simulations = int(np.ceil(mse_bootstrap*(1.96/tolerance)**2))
         
         return mse_bootstrap, n_simulations
-    
 
 # Independent function to plot histograms
 # This function is not part of the Stats class and is used for plotting
@@ -113,5 +107,3 @@ def plot_comparison_histogram(
     filename = title.lower().replace(" ", "_") + ".png"
     plt.savefig(filename, bbox_inches='tight')
     plt.show() # Shows the plot without blocking the script
-    # plt.show(block=False) # Shows the plot without blocking the script
-    # plt.close()
