@@ -1,7 +1,3 @@
-import numpy as np
-# from dask.array import average
-# from numba import float64
-
 from constants import *
 
 def movie_to_storage_map(group_id, movies_hashsets=INITIAL_MOVIE_HASHSET):

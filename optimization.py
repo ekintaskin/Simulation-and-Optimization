@@ -1,14 +1,15 @@
 import numpy as np
-import pandas as pd
 import copy
 from typing import Dict, Set
-import matplotlib.pyplot as plt
+
+import pandas as pd
 
 from simulation import Simulation
 from stats import Stats
 from constants import STORAGE_IDS, STORAGE_SIZES, MOVIES_IDS, MOVIE_SIZES, STORAGE_HANDLE_TIME_BETA, TIME_INTERVALS
-from utils import compute_mean_request_rate, compute_overall_request_rate
+from utils import compute_mean_request_rate
 
+import os
 
 class Optimization():
 
@@ -47,7 +48,7 @@ class Optimization():
         :param save_optimization_fct_history: whether to save the optimization function history
         :param choose_optimization_fct_randomly: whether to choose the optimization function randomly
         :param decreasing_tolerance: automatically decrease the tolerance linearly from 1 to tolerance over
-        the iterations.
+                                        the iterations.
         :param min_n_simulation_control_variate: minimum number of simulations to use the control variate method
         :return: best movie hashset and its corresponding best metric
         """
@@ -59,6 +60,10 @@ class Optimization():
         best_hashset = None
         fct_count = 0
         constraint_approved = None
+
+        candidate_stats = []
+        pareto_stats = []
+        os.makedirs("pareto_output", exist_ok=True)
         for i in range(num_optimization_iters):
             if self.print_results:
                 print(f"\nIteration {i + 1}/{num_optimization_iters} using function {optimization_fct_names[fct_count]}")
@@ -96,6 +101,11 @@ class Optimization():
             # generate MC or CV estimate
             metrics = []
             control_variates = []
+            observed_rates = []
+            mean_waits = []
+            max_waits = []
+            min_waits = []
+
             for _ in range(min(num_iters_per_optimization, n_simulations)):
                 # run simulation
                 requests = simulation.run(movie_hashsets=movie_hashsets)
@@ -104,6 +114,23 @@ class Optimization():
                 stats = Stats(requests)
                 waiting_times = stats.get_waiting_time()
                 metrics.append(metric_fct(waiting_times))
+                # store additional statistics
+                mean_waits.append(np.mean(waiting_times))
+                max_waits.append(np.max(waiting_times))
+                min_waits.append(np.min(waiting_times))
+                obs_rate = self.observed_max_request_rate(requests)
+                observed_rates.append(obs_rate)
+
+                candidate_stats.append({
+                    "iteration": i,
+                    "mean_wait": mean_waits[-1],
+                    "max_wait": max_waits[-1],
+                    "min_wait": min_waits[-1],
+                    "rate": observed_rates[-1],
+                    "type" : "candidate"
+                })
+
+
                 if use_control_variate: control_variates.append(self.observed_max_request_rate(requests))
 
             # update the best configuration if the mean metric is lower
@@ -112,6 +139,21 @@ class Optimization():
                 best_metric = metrics_mean
                 best_metric_mse_bootstrap = mse_bootstrap
                 best_hashset = movie_hashsets
+
+                idx_best = np.argmin(metrics)
+                best_mean_wait = mean_waits[idx_best]
+                best_max_wait = max_waits[idx_best]
+                best_min_wait = min_waits[idx_best]
+                best_obs_rate = observed_rates[idx_best]
+
+                pareto_stats.append({
+                    "iteration": i,
+                    "mean_wait": best_mean_wait,
+                    "max_wait": best_max_wait,
+                    "min_wait": best_min_wait,
+                    "rate": best_obs_rate,
+                    "type": "best"
+                })
 
                 if self.print_results:
                     print(f"New best metric: {best_metric:.2f} ± {1.96*np.sqrt(best_metric_mse_bootstrap/num_iters_per_optimization):.2f} (95% CI with {min(num_iters_per_optimization, n_simulations)} simulations).")
@@ -126,6 +168,9 @@ class Optimization():
                 fct_count += 1
                 if fct_count >= len(optimization_fct_names):
                     fct_count = 0
+
+        df_all = pd.DataFrame(candidate_stats + pareto_stats)
+        df_all.to_csv("pareto_output/pareto_stats.csv", index=False)
 
         return best_hashset, best_metric
 
@@ -460,7 +505,6 @@ class Optimization():
         return b + a*mu
 
 
-
 def test_optimization():
     """
     Test the optimization class.
@@ -489,7 +533,7 @@ def test_optimization():
         metric_fct=np.mean,
         tolerance=0.01,
         use_control_variate=True,
-        use_mean_rate_constraint=True,
+        use_mean_rate_constraint=False,
         save_optimization_fct_history=False,
         choose_optimization_fct_randomly=False,
         decreasing_tolerance=True

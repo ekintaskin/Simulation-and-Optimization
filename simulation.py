@@ -8,8 +8,6 @@ from storage import Storage
 from constants import GROUP_IDS, STORAGE_IDS, INITIAL_MOVIE_HASHSET
 
 
-
-
 class Simulation():
     def __init__(self):
         pass
@@ -45,9 +43,6 @@ class Simulation():
         for r_ in requests_sorted.values():
             requests.extend(r_)
         return requests
-            
-
-
 
 
 def test_simulation():
@@ -102,4 +97,3 @@ def test_simulation():
 
 if __name__ == "__main__":
     test_simulation()
-

@@ -156,9 +156,6 @@ def main():
     """
     Main function to run the optimization and analyze the results.
     """
-    # run_optimization(
-    #     num_runs=10,
-    # )
     analyze_optimization_fct_history()
 
 
