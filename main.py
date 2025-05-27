@@ -12,7 +12,7 @@ from optimization import Optimization
 
 # The simulation is now put in a function to allow for easier testing and modularity, particularly for plotting.
 # This function runs the simulation for a specified number of runs and collects statistics.
-def run_simulation(num_runs=100, movie_hashsets=None, threshold=60, print_results=False):
+def run_simulation(num_runs=100, movie_hashsets=None, threshold=30, print_results=False):
     """
     Run multiple simulations and collect statistics.
 
@@ -75,7 +75,7 @@ def run_simulation(num_runs=100, movie_hashsets=None, threshold=60, print_result
 def main():
     # === General Parameters ===
     num_runs = 100
-    threshold = 60
+    threshold = 30
     print_results = False
 
     # === Optimization Parameters ===
